@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f5ee">
+  <meta name="description" content="森屿时光，把每一分钟专注种成自己的小城。专注计时、每日记录、像素城市建设。">
+  <title>森屿时光 · 让专注生长</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<svg class="svg-defs" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20 3C9 2 3 7 5 14c2 7 14 8 15-11Z"/><path d="M3 21 15 9M9 15v-5m0 5h5"/></symbol>
+<symbol id="i-town" viewBox="0 0 24 24"><path d="m3 10 5-5 5 5v10H3Zm11-4 4-3 4 3v14h-9M6 20v-6h4v6m7-11h2m-2 4h2m-2 4h2"/></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="14" r="8"/><path d="M9 2h6m-3 0v4m0 8 3-3m3-5 2-2"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 3v17h17M8 16v-4m5 4V7m5 9V4"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5c-3-2-6-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V4c-4-1-7-1-10 1Zm0 0v15M5 8h3m-3 4h3m8-4h3m-3 4h3"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-1 3-3 1-2 3 2 2-1 3 3 2 1 3h4l2-3 3-1 2-3-2-2 1-3-3-2-1-3Z"/><circle cx="11" cy="11" r="3"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3v.1"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+<symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 6-4 7h4l-1 5 5-8h-4Z"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8Z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-5-5 5 5-5 5"/></symbol>
+<symbol id="i-sound" viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5Zm4 4c3 2 3 6 0 8m3-11c5 4 5 10 0 14"/></symbol>
+<symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="i-hammer" viewBox="0 0 24 24"><path d="m14 3 7 7-4 4-3-3L5 21l-3-3 10-9-3-3 5-3Z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></symbol>
+<symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-4a6 6 0 0 1 12 0v4M16 4a3 3 0 0 1 0 6m2 3c4 0 4 4 4 7"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L20 5"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-3v14M9 9l12-3"/><ellipse cx="5.5" cy="18" rx="3.5" ry="3"/><ellipse cx="17.5" cy="16" rx="3.5" ry="3"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M6 19a5 5 0 0 1-1-10 7 7 0 0 1 13-2 6 6 0 0 1 0 12Z"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+</defs></svg>
+<aside class="sidebar" aria-label="主导航">
+  <a class="brand-mark" href="#" aria-label="森屿时光主页"><svg class="icon"><use href="#i-leaf"/></svg></a>
+  <div class="nav-list">
+    <button class="nav-button active" data-nav="city"><svg class="icon"><use href="#i-town"/></svg><span>我的城市</span></button>
+    <button class="nav-button" data-nav="focus"><svg class="icon"><use href="#i-timer"/></svg><span>专注空间</span></button>
+    <button class="nav-button" data-nav="stats"><svg class="icon"><use href="#i-chart"/></svg><span>时光记录</span></button>
+    <button class="nav-button" data-nav="catalog"><svg class="icon"><use href="#i-book"/></svg><span>城市图鉴</span></button>
+  </div>
+  <div class="sidebar-bottom">
+    <button class="nav-button" data-nav="help"><svg class="icon"><use href="#i-help"/></svg><span>小镇指南</span></button>
+    <button class="avatar" data-nav="settings" aria-label="小镇设置">屿</button>
+  </div>
+</aside>
+<div class="app-shell">
+  <header class="app-header">
+    <a class="wordmark" href="#">森屿时光 <span>FOREST & FOCUS</span></a>
+    <div class="header-right"><button class="icon-button mobile-help" data-nav="help" aria-label="打开小镇指南" title="小镇指南"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg></button><span class="save-indicator" id="saveStatus"><i></i> 云朵很慢，时光正好</span><button class="points-pill" id="pointsButton" title="完成专注获得专注点"><svg class="icon"><use href="#i-coin"/></svg><strong id="points">0</strong><span>专注点</span></button></div>
+  </header>
+  <main>
+    <div class="page-heading">
+      <div><div class="eyebrow" id="greeting">给自己一点生长的时间</div><h1>把专注，种成一座小城<span>。</span></h1><p>从一段安静的时光，到一片属于你的世界。</p></div>
+      <div class="date-weather"><div><svg class="icon sun"><use href="#i-sun"/></svg><span>晴朗，宜专注</span></div><span id="dateLabel"></span></div>
+    </div>
+    <div class="workspace">
+      <section class="focus-panel card" aria-label="专注计时器">
+        <div class="section-heading"><h2><svg class="icon"><use href="#i-timer"/></svg>此刻，专注</h2><span class="mini-badge" id="focusStatus">准备开始</span></div>
+        <label class="input-label" for="taskInput">这一刻，想完成什么？</label>
+        <div class="task-input-wrap"><input id="taskInput" maxlength="80" placeholder="给今天的小目标取个名字" value="读一本好书"><svg class="icon"><use href="#i-leaf"/></svg></div>
+        <div class="duration-picker" aria-label="专注时长"><button class="selected" data-minutes="25">25 分钟</button><button data-minutes="45">45 分钟</button><button data-minutes="60">60 分钟</button><button id="customDuration">自定义</button></div>
+        <div class="custom-duration" id="customDurationRow" hidden><label for="minutesInput">专注时长</label><input type="number" id="minutesInput" min="1" max="240" value="25"><span>分钟</span></div>
+        <div class="timer-wrap">
+          <svg class="timer-ring" viewBox="0 0 232 232" aria-hidden="true"><circle class="ring-track" cx="116" cy="116" r="106"/><circle id="ringProgress" class="ring-progress" cx="116" cy="116" r="106" stroke-dasharray="666.02" stroke-dashoffset="0"/></svg>
+          <div class="timer-inner"><svg class="timer-leaf icon"><use href="#i-leaf"/></svg><div class="timer-digits" id="timerDisplay" role="timer">25<span>:</span>00</div><span class="timer-caption" id="timerCaption">世界会等你，慢慢来</span></div>
+          <span class="ring-dot"></span>
+        </div>
+        <div class="reward-preview"><svg class="icon"><use href="#i-coin"/></svg>完成后获得 <strong id="rewardAmount">25</strong> 专注点</div>
+        <button class="primary-button focus-start" id="focusButton"><svg class="icon"><use href="#i-play"/></svg><span>开始专注</span></button>
+        <button class="text-button cancel-focus" id="cancelFocus" hidden>结束本次专注</button>
+        <div class="sound-row"><button id="soundButton"><svg class="icon"><use href="#i-sound"/></svg><span id="soundLabel">林间白噪音</span><span class="sound-wave" id="soundWave">▂ ▄ ▆ ▃</span></button><button class="icon-button" id="soundSettings" aria-label="选择背景音乐"><svg class="icon"><use href="#i-settings"/></svg></button></div>
+        <div class="today-summary"><div><span>今日专注</span><strong><b id="todayMinutes">0</b><small> 分钟</small></strong></div><div><span>完成目标</span><strong><b id="todayCount">0</b><small> 个</small></strong></div><button id="viewStats" aria-label="查看专注统计"><svg class="icon"><use href="#i-arrow"/></svg></button></div>
+        <p class="little-quote">「每一份专注，都有生长的回响。」</p>
+      </section>
+      <section class="city-panel" aria-label="城市建设">
+        <div class="city-view card" id="cityView">
+          <canvas id="worldCanvas" tabindex="0" aria-label="可拖动的像素城市地图。滚轮缩放，选择设施后点击草地建设。方向键探索，回车建设。"></canvas>
+          <div class="city-topbar"><button class="city-name-badge" id="cityNameButton"><span class="city-badge-icon"><svg class="icon"><use href="#i-town"/></svg></span><span><strong id="cityName">森屿小镇</strong><small id="cityLevel">Lv.1 · 初生营地</small></span><span class="chevron">⌄</span></button><div class="world-status"><i></i> 自由生长中</div></div>
+          <div class="map-controls"><button class="map-button" id="zoomIn" aria-label="放大地图"><svg class="icon"><use href="#i-plus"/></svg></button><span id="zoomLabel">100%</span><button class="map-button" id="zoomOut" aria-label="缩小地图"><svg class="icon"><use href="#i-minus"/></svg></button><div class="control-divider"></div><button class="map-button" id="centerMap" aria-label="回到小镇中心"><svg class="icon"><use href="#i-target"/></svg></button></div>
+          <div class="map-intro" id="mapIntro"><span class="intro-sprout">✦</span><div><strong>这片世界，等你来写故事</strong><p>完成第一次专注，建起你的第一间小屋。</p></div><button class="icon-button" id="dismissIntro" aria-label="关闭提示"><svg class="icon"><use href="#i-close"/></svg></button></div>
+          <div class="map-hint" id="mapHint"><span class="mouse-glyph">▥</span> 拖动探索 <span>·</span> 滚轮缩放 <span>·</span> 无限世界</div>
+          <button class="daylight-button" id="daylightButton" title="切换暮色"><svg class="icon"><use href="#i-sun"/></svg><span>日光</span></button>
+          <div class="placement-status" id="placementStatus" hidden></div>
+        </div>
+        <div class="city-metrics card"><button class="level-block" id="levelButton"><div class="level-medallion" id="levelNumber">1</div><div><div class="level-title"><strong id="levelTitle">初生营地</strong><span id="levelProgressLabel">下一站 · 林间村落</span></div><div class="level-track"><i id="levelProgress"></i></div></div><svg class="icon"><use href="#i-arrow"/></svg></button><div class="metric"><svg class="icon"><use href="#i-people"/></svg><div><span>小镇人口</span><strong id="population">0<small> 人</small></strong></div></div><div class="metric"><svg class="icon"><use href="#i-chart"/></svg><div><span>城市 GDP</span><strong id="gdp">0</strong></div></div><div class="metric building-metric"><svg class="icon"><use href="#i-town"/></svg><div><span>已建设施</span><strong id="buildingCount">0<small> 座</small></strong></div></div></div>
+        <section class="build-panel card" aria-label="设施建造栏">
+          <div class="build-heading"><div class="build-title"><svg class="icon"><use href="#i-hammer"/></svg><h2>让小镇生长</h2></div><button class="text-button" id="openCatalog">全部图鉴 <svg class="icon"><use href="#i-arrow"/></svg></button></div>
+          <div class="build-toolbar"><div class="category-tabs" id="categoryTabs"><button class="active" data-category="全部">全部</button><button data-category="居住">居住</button><button data-category="交通">交通</button><button data-category="公共">公共</button><button data-category="生产">生产</button><button data-category="景观">景观</button></div><button class="demolish-button" id="demolishButton"><svg class="icon"><use href="#i-trash"/></svg>拆除</button></div>
+          <div class="building-list" id="buildingList"></div>
+          <div class="build-footer"><span id="buildHint"><span class="tiny-dot"></span> 选择一座建筑，再点击地图上的草地</span><span>一点一滴，皆是风景</span></div>
+        </section>
+      </section>
+    </div>
+    <footer class="page-footer"><span><svg class="icon"><use href="#i-leaf"/></svg> 不必着急，你的小城会慢慢长大。</span><span id="autosaveLabel">进度自动保存在此浏览器 <i></i></span></footer>
+  </main>
+</div>
+<div class="toast-container" id="toasts" role="status" aria-live="polite"></div>
+<dialog id="modal" class="modal" aria-label="森屿时光详情"><button class="modal-close icon-button" id="closeModal" aria-label="关闭弹窗"><svg class="icon"><use href="#i-close"/></svg></button><div id="modalContent"></div></dialog>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<script type="module" src="./app.js"></script>
+</body></html>
