@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f5ee">
-  <meta name="description" content="森屿时光，把每一分钟专注种成自己的小城。专注计时、每日记录、像素城市建设。">
-  <title>森屿时光 · 让专注生长</title>
+  <meta name="description" content="FocuCity，把每一分钟专注种成自己的小城。专注计时、每日记录、像素城市建设。">
+  <title>FocuCity</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -38,7 +38,7 @@
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
 </defs></svg>
 <aside class="sidebar" aria-label="主导航">
-  <a class="brand-mark" href="#" aria-label="森屿时光主页"><svg class="icon"><use href="#i-leaf"/></svg></a>
+  <a class="brand-mark" href="#" aria-label="FocuCity 主页"><img src="./favicon.svg" alt="FocuCity 城市时钟标志" width="45" height="45"></a>
   <div class="nav-list">
     <button class="nav-button active" data-nav="city"><svg class="icon"><use href="#i-town"/></svg><span>我的城市</span></button>
     <button class="nav-button" data-nav="focus"><svg class="icon"><use href="#i-timer"/></svg><span>专注空间</span></button>
@@ -47,12 +47,12 @@
   </div>
   <div class="sidebar-bottom">
     <button class="nav-button" data-nav="help"><svg class="icon"><use href="#i-help"/></svg><span>小镇指南</span></button>
-    <button class="avatar" data-nav="settings" aria-label="小镇设置">屿</button>
+    <button class="avatar" data-nav="settings" aria-label="小镇设置">F</button>
   </div>
 </aside>
 <div class="app-shell">
   <header class="app-header">
-    <a class="wordmark" href="#">森屿时光 <span>FOREST & FOCUS</span></a>
+    <a class="wordmark" href="#" aria-label="FocuCity"><img class="wordmark-logo" src="./favicon.svg" alt="" width="44" height="44"><span class="brand-name">FocuCity</span></a>
     <div class="header-right"><button class="icon-button mobile-help" data-nav="help" aria-label="打开小镇指南" title="小镇指南"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg></button><span class="save-indicator" id="saveStatus"><i></i> 云朵很慢，时光正好</span><button class="points-pill" id="pointsButton" title="完成专注获得专注点"><svg class="icon"><use href="#i-coin"/></svg><strong id="points">0</strong><span>专注点</span></button></div>
   </header>
   <main>
@@ -82,7 +82,7 @@
       <section class="city-panel" aria-label="城市建设">
         <div class="city-view card" id="cityView">
           <canvas id="worldCanvas" tabindex="0" aria-label="可拖动的像素城市地图。滚轮缩放，选择设施后点击草地建设。方向键探索，回车建设。"></canvas>
-          <div class="city-topbar"><button class="city-name-badge" id="cityNameButton"><span class="city-badge-icon"><svg class="icon"><use href="#i-town"/></svg></span><span><strong id="cityName">森屿小镇</strong><small id="cityLevel">Lv.1 · 初生营地</small></span><span class="chevron">⌄</span></button><div class="world-status"><i></i> 自由生长中</div></div>
+          <div class="city-topbar"><button class="city-name-badge" id="cityNameButton"><span class="city-badge-icon"><svg class="icon"><use href="#i-town"/></svg></span><span><strong id="cityName">FocuCity</strong><small id="cityLevel">Lv.1 · 初生营地</small></span><span class="chevron">⌄</span></button><div class="world-status"><i></i> 自由生长中</div></div>
           <div class="map-controls"><button class="map-button" id="zoomIn" aria-label="放大地图"><svg class="icon"><use href="#i-plus"/></svg></button><span id="zoomLabel">100%</span><button class="map-button" id="zoomOut" aria-label="缩小地图"><svg class="icon"><use href="#i-minus"/></svg></button><div class="control-divider"></div><button class="map-button" id="centerMap" aria-label="回到小镇中心"><svg class="icon"><use href="#i-target"/></svg></button></div>
           <div class="map-intro" id="mapIntro"><span class="intro-sprout">✦</span><div><strong>这片世界，等你来写故事</strong><p>完成第一次专注，建起你的第一间小屋。</p></div><button class="icon-button" id="dismissIntro" aria-label="关闭提示"><svg class="icon"><use href="#i-close"/></svg></button></div>
           <div class="map-hint" id="mapHint"><span class="mouse-glyph">▥</span> 拖动探索 <span>·</span> 滚轮缩放 <span>·</span> 无限世界</div>
@@ -102,7 +102,7 @@
   </main>
 </div>
 <div class="toast-container" id="toasts" role="status" aria-live="polite"></div>
-<dialog id="modal" class="modal" aria-label="森屿时光详情"><button class="modal-close icon-button" id="closeModal" aria-label="关闭弹窗"><svg class="icon"><use href="#i-close"/></svg></button><div id="modalContent"></div></dialog>
+<dialog id="modal" class="modal" aria-label="FocuCity详情"><button class="modal-close icon-button" id="closeModal" aria-label="关闭弹窗"><svg class="icon"><use href="#i-close"/></svg></button><div id="modalContent"></div></dialog>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <script type="module" src="./app.js"></script>
 </body></html>

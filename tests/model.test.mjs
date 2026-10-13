@@ -220,7 +220,7 @@ test('a stale tab synchronizes a reset while explicit import remains available',
     delayedTab.cityName = 'Stale name';
     assert.equal(saveState(delayedTab).conflict, true);
     assert.equal(delayedTab.points, 0);
-    assert.equal(delayedTab.cityName, '森屿小镇');
+    assert.equal(delayedTab.cityName, 'FocuCity');
     const imported = validateSave(original).state;
     assert.equal(saveState(imported).ok, true);
     assert.equal(loadState().points, 50);

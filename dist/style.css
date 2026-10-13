@@ -89,3 +89,12 @@
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .city-name-badge{max-width:75%}.city-name-badge>span:nth-child(2){min-width:0}.city-name-badge strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.world-status{white-space:nowrap}@media(max-width:360px){.city-topbar .world-status{display:none}.city-name-badge{max-width:calc(100% - 45px)}}
+/* FocuCity uses the supplied city-clock symbol; the source artwork is unchanged. */
+.brand-mark{background:#fff;box-shadow:0 3px 12px #23577914;border:1px solid #e4e9e6;overflow:hidden}
+.brand-mark img{display:block;width:45px;height:45px;object-fit:contain}
+.wordmark{display:flex;align-items:center;gap:12px;letter-spacing:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.wordmark-logo{display:block;width:44px;height:44px;flex-shrink:0;border-radius:11px}
+.wordmark .brand-name{font:750 25px/1.1 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;letter-spacing:-.8px;color:#235779;margin:0;white-space:nowrap}
+.avatar{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#276685;background:#e1edec;font-weight:600}
+@media(max-width:790px){.wordmark{gap:8px}.wordmark-logo{width:35px;height:35px;border-radius:9px}.wordmark .brand-name{font-size:21px;letter-spacing:-.7px}}
+@media(max-width:360px){.wordmark{gap:5px}.wordmark-logo{width:29px;height:29px}.wordmark .brand-name{font-size:19px;letter-spacing:-.6px}}

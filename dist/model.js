@@ -1,4 +1,5 @@
 // The city economy and focus clock are independent of rendering.
+// Preserve the original storage key so existing saves remain available after the FocuCity rename.
 export const STORAGE_KEY = 'senyu-focus-city-v1';
 export const CATALOG = Object.freeze([
   { id: 'cottage', name: '林间小屋', category: '居住', description: '一扇暖黄的窗，十二位新邻居的家。', cost: 15, level: 1, population: 12, gdp: 18 },
@@ -49,7 +50,7 @@ export function createInitialState(seed = Math.floor(Math.random() * 0xffffffff)
     buildings: {},
     sessions: [],
     focus: null,
-    cityName: '森屿小镇',
+    cityName: 'FocuCity',
     levelUnlocked: 1,
     settings: { sound: false },
   };
@@ -221,7 +222,7 @@ export function demolishAt(state, x, y) {
 
 export function validateSave(data) {
   if (!isRecord(data) || data.version !== 1 || !isRecord(data.buildings) || !Array.isArray(data.sessions)) {
-    return { ok: false, message: '这不是有效的森屿存档，或存档版本不受支持。' };
+    return { ok: false, message: '这不是有效的 FocuCity 存档，或存档版本不受支持。' };
   }
   const state = createInitialState(data.seed);
   state.cityName = cleanText(data.cityName, state.cityName, 24);

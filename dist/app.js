@@ -110,7 +110,7 @@ function updateClock() {
     $('spaceStart').innerHTML = icon(focus?.status === 'running' ? 'pause' : 'play') + buttonName;
     setText('spaceStatus', focus ? focus.status === 'running' ? '小镇在远处，陪你一起生长。' : '你的进度会在这里等你。' : '准备好后，就从这一分钟开始。');
   }
-  document.title = focus ? `${clock} · ${focus.status === 'paused'?'已暂停':'专注中'} · 森屿时光` : '森屿时光 · 让专注生长';
+  document.title = focus ? `${clock} · ${focus.status === 'paused'?'已暂停':'专注中'} · FocuCity` : 'FocuCity';
 }
 function finishFocus(result) {
   if (!persist()) return;
@@ -212,7 +212,7 @@ function openSettings() {
   openModal('settings', `<div class="modal-eyebrow">MAKE YOURSELF AT HOME</div><h2>关于你的小镇</h2><p class="modal-subtitle">给这里起一个名字，留下一份属于自己的时光。</p><form id="settingsForm"><div class="field"><label for="cityNameInput">小镇名字</label><input id="cityNameInput" value="${esc(state.cityName)}" maxlength="24" required></div><button class="primary-button" type="submit">保存名字</button></form><div class="settings-row"><div><strong>带走这段时光</strong><p>导出城市、专注记录和当前计时进度。</p></div><button class="secondary-button" data-action="export">导出存档</button></div><div class="settings-row"><div><strong>回到熟悉的小镇</strong><p>导入存档会替换此浏览器的现有进度。</p></div><button class="secondary-button" data-action="import">导入存档</button></div><p class="inline-note">当前为本地存档模式，不会自动跨设备同步。更换浏览器或清理网站数据前，记得导出一份备份。<br>世界种子：${state.seed} · 版本 0.1</p>`);
 }
 function openHelp() {
-  openModal('help', `<div class="modal-eyebrow">WELCOME TO FOREST & FOCUS</div><h2>从一段专注开始</h2><p class="modal-subtitle">在森屿，时间不是催促你的指针，而是让城市生长的种子。</p><ol class="help-steps"><li><div><strong>给自己一个小目标</strong><p>填写任务，选择 1–240 分钟。完整完成后，每分钟获得 1 专注点。暂停不计时，提前结束不发放奖励。</p></div></li><li><div><strong>把用心变成风景</strong><p>选中设施后，点击草地或林地建设。第一间林间小屋需要 15 点。山地和水面不能直接建设，港口需要紧邻水面的陆地。</p></div></li><li><div><strong>让生活在这里发生</strong><p>道路上会有散步的居民，港口旁会有来访的帆船。人口或 GDP 达标后自动升级，解锁医院、学校、工厂和机场。</p></div></li><li><div><strong>慢慢探索，不必着急</strong><p>拖动探索世界，滚轮或右侧按钮缩放。选择拆除工具可返还一半点数（向下取整）。Esc 退出建造。地图获得焦点后，也可用方向键选地块、回车建设。</p></div></li></ol><p class="inline-note">这是森屿的第一版：经济数值由设施累计，居民与船只为环境动画。所有进度自动保存在此浏览器，点击左下角头像可以导出备份。</p>`);
+  openModal('help', `<div class="modal-eyebrow">WELCOME TO FOCUCITY</div><h2>从一段专注开始</h2><p class="modal-subtitle">在 FocuCity，时间不是催促你的指针，而是让城市生长的种子。</p><ol class="help-steps"><li><div><strong>给自己一个小目标</strong><p>填写任务，选择 1–240 分钟。完整完成后，每分钟获得 1 专注点。暂停不计时，提前结束不发放奖励。</p></div></li><li><div><strong>把用心变成风景</strong><p>选中设施后，点击草地或林地建设。第一间林间小屋需要 15 点。山地和水面不能直接建设，港口需要紧邻水面的陆地。</p></div></li><li><div><strong>让生活在这里发生</strong><p>道路上会有散步的居民，港口旁会有来访的帆船。人口或 GDP 达标后自动升级，解锁医院、学校、工厂和机场。</p></div></li><li><div><strong>慢慢探索，不必着急</strong><p>拖动探索世界，滚轮或右侧按钮缩放。选择拆除工具可返还一半点数（向下取整）。Esc 退出建造。地图获得焦点后，也可用方向键选地块、回车建设。</p></div></li></ol><p class="inline-note">这是 FocuCity 的第一版：经济数值由设施累计，居民与船只为环境动画。所有进度自动保存在此浏览器，点击左下角头像可以导出备份。</p>`);
 }
 function openSound() {
   openModal('sound', `<div class="modal-eyebrow">A SOFTER KIND OF SILENCE</div><h2>听见安静的声音</h2><p class="modal-subtitle">原创合成环境音，陪你度过一段不被打扰的时光。</p><div class="sound-options">${[['forest','leaf','林间微风'],['rain','cloud','窗外细雨'],['piano','music','午后轻琴']].map(([id,i,name])=>`<button class="sound-option ${musicMode===id?'selected':''}" data-sound="${id}">${icon(i)}${name}</button>`).join('')}</div><h3>让声音轻一点</h3><input class="volume-control" id="volumeControl" type="range" min="0" max="1" step=".01" value="${volume}" aria-label="音乐音量"><div class="modal-actions"><button class="primary-button" data-action="sound-toggle">${sound.active?'暂停声音':'开始播放'}</button></div>`);
@@ -235,7 +235,7 @@ async function toggleSound() {
 function exportSave() {
   const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob), a = document.createElement('a');
-  a.href=url; a.download=`森屿存档-${new Date().toISOString().slice(0,10)}.json`; a.click();
+  a.href=url; a.download=`FocuCity-save-${new Date().toISOString().slice(0,10)}.json`; a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000); toast('已导出存档，愿时光被好好珍藏。');
 }
 
