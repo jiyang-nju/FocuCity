@@ -7,6 +7,7 @@
   <title>FocuCity</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./layout.css">
 </head>
 <body>
 <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -38,12 +39,14 @@
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
 </defs></svg>
 <aside class="sidebar" aria-label="主导航">
-  <a class="brand-mark" href="#" aria-label="FocuCity 主页"><img src="./favicon.svg" alt="FocuCity 城市时钟标志" width="45" height="45"></a>
+  <a class="brand-mark" href="#home" aria-label="FocuCity 主页"><img src="./favicon.svg" alt="FocuCity 城市时钟标志" width="45" height="45"></a>
   <div class="nav-list">
-    <button class="nav-button active" data-nav="city"><svg class="icon"><use href="#i-town"/></svg><span>我的城市</span></button>
-    <button class="nav-button" data-nav="focus"><svg class="icon"><use href="#i-timer"/></svg><span>专注空间</span></button>
+    <button class="nav-button active" data-nav="home"><svg class="icon"><use href="#i-timer"/></svg><span>专注首页</span></button>
+    <button class="nav-button" data-nav="town"><svg class="icon"><use href="#i-town"/></svg><span>小镇</span></button>
     <button class="nav-button" data-nav="stats"><svg class="icon"><use href="#i-chart"/></svg><span>时光记录</span></button>
     <button class="nav-button" data-nav="catalog"><svg class="icon"><use href="#i-book"/></svg><span>城市图鉴</span></button>
+    <button class="nav-button" data-nav="checkin"><svg class="icon"><use href="#i-check"/></svg><span>每日签到</span></button>
+    <button class="nav-button" data-nav="levels"><svg class="icon"><use href="#i-people"/></svg><span>城市成长</span></button>
   </div>
   <div class="sidebar-bottom">
     <button class="nav-button" data-nav="help"><svg class="icon"><use href="#i-help"/></svg><span>小镇指南</span></button>
@@ -52,16 +55,13 @@
 </aside>
 <div class="app-shell">
   <header class="app-header">
-    <a class="wordmark" href="#" aria-label="FocuCity"><img class="wordmark-logo" src="./favicon.svg" alt="" width="44" height="44"><span class="brand-name">FocuCity</span></a>
-    <div class="header-right"><button class="icon-button mobile-help" data-nav="help" aria-label="打开小镇指南" title="小镇指南"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg></button><span class="save-indicator" id="saveStatus"><i></i> 云朵很慢，时光正好</span><button class="points-pill" id="pointsButton" title="完成专注获得专注点"><svg class="icon"><use href="#i-coin"/></svg><strong id="points">0</strong><span>专注点</span></button></div>
+    <a class="wordmark" href="#home" aria-label="FocuCity"><img class="wordmark-logo" src="./favicon.svg" alt="" width="44" height="44"><span class="brand-name">FocuCity</span></a>
+    <div class="header-right"><button class="icon-button mobile-help" data-nav="help" aria-label="打开小镇指南" title="小镇指南"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg></button><button class="header-focus" id="headerFocus" data-route="home" hidden></button><button class="points-pill" id="pointsButton" title="查看签到与专注点奖励"><svg class="icon"><use href="#i-coin"/></svg><strong id="points">0</strong><span>专注点</span></button></div>
   </header>
-  <main>
-    <div class="page-heading">
-      <div><div class="eyebrow" id="greeting">给自己一点生长的时间</div><h1>把专注，种成一座小城<span>。</span></h1><p>从一段安静的时光，到一片属于你的世界。</p></div>
-      <div class="date-weather"><div><svg class="icon sun"><use href="#i-sun"/></svg><span>晴朗，宜专注</span></div><span id="dateLabel"></span></div>
-    </div>
-    <div class="workspace">
-      <section class="focus-panel card" aria-label="专注计时器">
+  <main id="appMain">
+    <section class="app-page home-page" id="homePage" aria-label="专注首页">
+      <div class="home-heading"><div class="eyebrow" id="greeting">给自己一点生长的时间</div><h1>此刻，专注。<span>小城，生长。</span></h1><p>把一段认真度过的时间，变成属于你的风景。</p><span id="dateLabel"></span></div>
+      <div class="focus-home">      <section class="focus-panel card" aria-label="专注计时器">
         <div class="section-heading"><h2><svg class="icon"><use href="#i-timer"/></svg>此刻，专注</h2><span class="mini-badge" id="focusStatus">准备开始</span></div>
         <label class="input-label" for="taskInput">这一刻，想完成什么？</label>
         <div class="task-input-wrap"><input id="taskInput" maxlength="80" placeholder="给今天的小目标取个名字" value="读一本好书"><svg class="icon"><use href="#i-leaf"/></svg></div>
@@ -79,7 +79,9 @@
         <div class="today-summary"><div><span>今日专注</span><strong><b id="todayMinutes">0</b><small> 分钟</small></strong></div><div><span>完成目标</span><strong><b id="todayCount">0</b><small> 个</small></strong></div><button id="viewStats" aria-label="查看专注统计"><svg class="icon"><use href="#i-arrow"/></svg></button></div>
         <p class="little-quote">「每一份专注，都有生长的回响。」</p>
       </section>
-      <section class="city-panel" aria-label="城市建设">
+<button class="town-entry secondary-button" data-route="town">前往小镇 <svg class="icon"><use href="#i-arrow"/></svg></button></div>
+    </section>
+    <section class="app-page town-page" id="townPage" aria-label="小镇" hidden>      <section class="city-panel" aria-label="城市建设">
         <div class="city-view card" id="cityView">
           <canvas id="worldCanvas" tabindex="0" aria-label="可拖动的像素城市地图。滚轮缩放，选择设施后点击草地建设。方向键探索，回车建设。"></canvas>
           <div class="city-topbar"><button class="city-name-badge" id="cityNameButton"><span class="city-badge-icon"><svg class="icon"><use href="#i-town"/></svg></span><span><strong id="cityName">FocuCity</strong><small id="cityLevel">Lv.1 · 初生营地</small></span><span class="chevron">⌄</span></button><div class="world-status"><i></i> 自由生长中</div></div>
@@ -87,18 +89,23 @@
           <div class="map-intro" id="mapIntro"><span class="intro-sprout">✦</span><div><strong>这片世界，等你来写故事</strong><p>完成第一次专注，建起你的第一间小屋。</p></div><button class="icon-button" id="dismissIntro" aria-label="关闭提示"><svg class="icon"><use href="#i-close"/></svg></button></div>
           <div class="map-hint" id="mapHint"><span class="mouse-glyph">▥</span> 拖动探索 <span>·</span> 滚轮缩放 <span>·</span> 无限世界</div>
           <button class="daylight-button" id="daylightButton" title="切换暮色"><svg class="icon"><use href="#i-sun"/></svg><span>日光</span></button>
-          <div class="placement-status" id="placementStatus" hidden></div>
+          <div class="city-hud"><div class="city-metrics card"><button class="level-block" id="levelButton"><div class="level-medallion" id="levelNumber">1</div><div><div class="level-title"><strong id="levelTitle">初生营地</strong><span id="levelProgressLabel">下一站 · 林间村落</span></div><div class="level-track"><i id="levelProgress"></i></div></div><svg class="icon"><use href="#i-arrow"/></svg></button><div class="metric"><svg class="icon"><use href="#i-people"/></svg><div><span>小镇人口</span><strong id="population">0<small> 人</small></strong></div></div><div class="metric"><svg class="icon"><use href="#i-chart"/></svg><div><span>城市 GDP</span><strong id="gdp">0</strong></div></div><div class="metric building-metric"><svg class="icon"><use href="#i-town"/></svg><div><span>已建设施</span><strong id="buildingCount">0<small> 座</small></strong></div></div></div></div>
+          <button class="secondary-button build-toggle" id="toggleBuild" aria-expanded="false" aria-controls="buildDock"><svg class="icon"><use href="#i-hammer"/></svg> 建设小镇 <span>＋</span></button>
+          <div class="network-status" id="networkStatus">连接道路与车站，让小镇流动起来</div>
+          <button class="map-layer-button" id="metroLayer" aria-pressed="false">地铁图层</button>
+          <div class="placement-status" id="placementStatus" hidden></div><div class="placement-actions" id="placementActions" hidden><button id="rotatePlacement" class="secondary-button">旋转方向</button><button id="cancelPlacement" class="secondary-button">取消建造</button></div>
         </div>
-        <div class="city-metrics card"><button class="level-block" id="levelButton"><div class="level-medallion" id="levelNumber">1</div><div><div class="level-title"><strong id="levelTitle">初生营地</strong><span id="levelProgressLabel">下一站 · 林间村落</span></div><div class="level-track"><i id="levelProgress"></i></div></div><svg class="icon"><use href="#i-arrow"/></svg></button><div class="metric"><svg class="icon"><use href="#i-people"/></svg><div><span>小镇人口</span><strong id="population">0<small> 人</small></strong></div></div><div class="metric"><svg class="icon"><use href="#i-chart"/></svg><div><span>城市 GDP</span><strong id="gdp">0</strong></div></div><div class="metric building-metric"><svg class="icon"><use href="#i-town"/></svg><div><span>已建设施</span><strong id="buildingCount">0<small> 座</small></strong></div></div></div>
-        <section class="build-panel card" aria-label="设施建造栏">
-          <div class="build-heading"><div class="build-title"><svg class="icon"><use href="#i-hammer"/></svg><h2>让小镇生长</h2></div><button class="text-button" id="openCatalog">全部图鉴 <svg class="icon"><use href="#i-arrow"/></svg></button></div>
-          <div class="build-toolbar"><div class="category-tabs" id="categoryTabs"><button class="active" data-category="全部">全部</button><button data-category="居住">居住</button><button data-category="交通">交通</button><button data-category="公共">公共</button><button data-category="生产">生产</button><button data-category="景观">景观</button></div><button class="demolish-button" id="demolishButton"><svg class="icon"><use href="#i-trash"/></svg>拆除</button></div>
+        <section class="build-panel card" id="buildDock" aria-label="设施建造栏" hidden>
+          <div class="build-heading"><div class="build-title"><svg class="icon"><use href="#i-hammer"/></svg><h2>建设小镇</h2></div><div class="build-actions"><button class="text-button" id="openCatalog">查看图鉴 →</button><button class="icon-button" id="closeBuild" aria-label="收起建设工具"><svg class="icon"><use href="#i-close"/></svg></button></div></div>
+          <div class="build-toolbar"><div class="category-tabs" id="categoryTabs"><button class="active" data-category="全部">全部</button><button data-category="居住">居住</button><button data-category="交通">交通</button><button data-category="公共">公共</button><button data-category="生产">生产</button><button data-category="景观">景观</button></div><button class="demolish-button" id="rotateBuilding" title="旋转建筑（R）">旋转 R</button><button class="demolish-button" id="demolishButton"><svg class="icon"><use href="#i-trash"/></svg>拆除</button></div>
+          <div class="build-search-row"><input type="search" id="buildSearch" placeholder="搜索设施名称" aria-label="搜索建设设施"><label><input type="checkbox" id="buildUnlocked"> 只看已解锁</label></div>
           <div class="building-list" id="buildingList"></div>
-          <div class="build-footer"><span id="buildHint"><span class="tiny-dot"></span> 选择一座建筑，再点击地图上的草地</span><span>一点一滴，皆是风景</span></div>
+          <div class="build-footer"><span id="buildHint"><span class="tiny-dot"></span> 选择设施后点击地图；R 旋转，Esc 退出</span><span>一点一滴，皆是风景</span></div>
         </section>
       </section>
-    </div>
-    <footer class="page-footer"><span><svg class="icon"><use href="#i-leaf"/></svg> 不必着急，你的小城会慢慢长大。</span><span id="autosaveLabel">进度自动保存在此浏览器 <i></i></span></footer>
+</section>
+    <section class="app-page module-page" id="modulePage" aria-label="功能页面" hidden><div id="pageContent"></div></section>
+    <footer class="page-footer"><span>FocuCity · 一点一滴，皆是风景</span><span id="autosaveLabel">进度自动保存在此浏览器 <i></i></span></footer>
   </main>
 </div>
 <div class="toast-container" id="toasts" role="status" aria-live="polite"></div>

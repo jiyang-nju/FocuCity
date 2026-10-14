@@ -1,6 +1,7 @@
-import { CATALOG, LEVELS, STORAGE_KEY, loadState, saveState, validateSave, cityStats, todayStats, weekStats, startFocus, pauseFocus, resumeFocus, cancelFocus, completeFocus, getRemaining, buildAt, demolishAt } from './model.js';
+import { CATALOG, LEVELS, STORAGE_KEY, loadState, saveState, validateSave, cityStats, todayStats, weekStats, startFocus, pauseFocus, resumeFocus, cancelFocus, completeFocus, getRemaining, buildAt, demolishAt, getBuildingAt, canUpgradeBuilding, upgradeBuilding, localDateKey } from './model.js';
 import { createWorld, terrainAt, drawBuildingIcon } from './world.js';
 import { createSoundscape } from './audio.js';
+import { getCheckinStatus, claimCheckin } from './checkins.js';
 
 const $ = id => document.getElementById(id);
 const icon = (name, cls = '') => `<svg class="icon ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -10,6 +11,8 @@ let chosenMinutes = state.focus ? state.focus.duration / 60 : 25;
 let customDurationOpen = ![25,45,60].includes(chosenMinutes);
 let category = '全部', selectedTool = null, modalType = null, musicMode = 'forest', volume = .35;
 let introDismissed = false, saveErrorShown = false;
+let currentView = 'home', rotation = 0, catalogCategory = '全部', catalogQuery = '', catalogUnlocked = false;
+const views = new Set(['home','town','stats','catalog','checkin','levels','settings','help']);
 const sound = createSoundscape();
 sound.setVolume(volume);
 const world = createWorld($('worldCanvas'), { getState: () => state, onTileClick: handleTile, onHover: () => { $('zoomLabel').textContent = Math.round(world.getView().zoom * 100) + '%'; } });
@@ -81,14 +84,17 @@ function render() {
   document.querySelectorAll('[data-minutes],#customDuration').forEach(b => b.disabled = !!state.focus);
   renderDuration();
   renderBuildings(); updateClock();
+  if (['stats','catalog','checkin','levels'].includes(currentView)) pageRenderers[currentView]();
 }
 function renderBuildings() {
   const level = cityStats(state).level;
-  const items = CATALOG.filter(item => category === '全部' || item.category === category);
+  const query = $('buildSearch').value.trim();
+  const items = CATALOG.filter(item => (category === '全部' || item.category === category) && (!query || item.name.includes(query)) && (!$('buildUnlocked').checked || item.level <= level));
   $('buildingList').innerHTML = items.map(item => {
     const locked = item.level > level;
-    return `<button class="building-card ${locked?'locked':''} ${selectedTool === item.id?'selected':''}" data-build="${item.id}" aria-pressed="${selectedTool === item.id}" aria-label="${item.name}，${locked?`等级 ${item.level} 解锁`:`${item.cost} 专注点`}" title="${item.description} · 人口 +${item.population} · GDP +${item.gdp}">${locked?icon('lock','card-lock'):''}<canvas class="building-icon" data-building="${item.id}" aria-hidden="true"></canvas><span class="building-card-name">${item.name}</span><span class="building-card-cost">${icon(locked?'lock':'coin')}${locked?`Lv.${item.level} 解锁`:item.cost}</span></button>`;
+    return `<button class="building-card ${locked?'locked':''} ${selectedTool === item.id?'selected':''}" data-build="${item.id}" aria-pressed="${selectedTool === item.id}" aria-label="${item.name}，${locked?`等级 ${item.level} 解锁`:`${item.cost} 专注点`}" title="${item.description} · 人口 +${item.population} · GDP +${item.gdp}">${locked?icon('lock','card-lock'):''}<canvas class="building-icon" data-building="${item.id}" aria-hidden="true"></canvas><span class="building-card-name">${item.name}</span><span class="building-size">${item.width} × ${item.height} 格 · T${item.tier || 1}</span><span class="building-card-cost">${icon(locked?'lock':'coin')}${locked?`Lv.${item.level} 解锁`:item.cost}</span></button>`;
   }).join('');
+  if (!items.length) $('buildingList').innerHTML = '<p class="empty-state">没有符合条件的设施。</p>';
   fillBuildingIcons($('buildingList'));
 }
 function updateClock() {
@@ -110,6 +116,8 @@ function updateClock() {
     $('spaceStart').innerHTML = icon(focus?.status === 'running' ? 'pause' : 'play') + buttonName;
     setText('spaceStatus', focus ? focus.status === 'running' ? '小镇在远处，陪你一起生长。' : '你的进度会在这里等你。' : '准备好后，就从这一分钟开始。');
   }
+  $('headerFocus').hidden = !focus || currentView === 'home';
+  $('headerFocus').textContent = focus ? `${focus.status === 'paused' ? '已暂停' : '专注中'} · ${clock}` : '';
   document.title = focus ? `${clock} · ${focus.status === 'paused'?'已暂停':'专注中'} · FocuCity` : 'FocuCity';
 }
 function finishFocus(result) {
@@ -137,6 +145,31 @@ function focusAction() {
   if (!persist()) return;
   render();
 }
+function setBuildDock(open) {
+  $('buildDock').hidden = !open;
+  $('toggleBuild').setAttribute('aria-expanded', String(open));
+  $('townPage').classList.toggle('dock-open', open);
+}
+function updateToolHint() {
+  $('demolishButton').classList.toggle('active', selectedTool === 'demolish');
+  $('placementStatus').hidden = !selectedTool;
+  $('placementActions').hidden = !selectedTool;
+  $('rotatePlacement').hidden = !selectedTool || selectedTool === 'demolish';
+  $('placementStatus').classList.toggle('danger', selectedTool === 'demolish');
+  $('rotateBuilding').disabled = !selectedTool || selectedTool === 'demolish';
+  if (selectedTool === 'demolish') {
+    setText('placementStatus','拆除模式 · 点击设施任一格，返还 50% 已投入点数 · Esc 退出');
+    setText('buildHint','整座设施一并拆除，请留意占地范围');
+  } else if (selectedTool) {
+    const item = CATALOG.find(x => x.id === selectedTool);
+    const w = rotation ? item.height : item.width, h = rotation ? item.width : item.height;
+    setText('placementStatus',`${item.name} · ${w}×${h} 格 · ${item.cost} 点 · R 旋转 · Esc 退出`);
+    setText('buildHint',`${item.name}：人口 +${item.population} · GDP +${item.gdp} · ${terrainLabel(item)}`);
+  } else setText('buildHint','选择设施后点击地图；R 旋转，Esc 退出');
+}
+function terrainLabel(item) {
+  return item.terrain === 'water' ? '建于水面' : item.terrain === 'mountain' ? '建于山地' : item.terrain === 'shore' ? '临水陆地' : item.terrain === 'underground' ? '地下线路' : '草地或林地';
+}
 function selectTool(id) {
   if (id !== 'demolish' && id) {
     const item = CATALOG.find(x => x.id === id);
@@ -145,18 +178,23 @@ function selectTool(id) {
   }
   selectedTool = selectedTool === id ? null : id;
   world.setTool(selectedTool);
-  $('demolishButton').classList.toggle('active', selectedTool === 'demolish');
-  $('placementStatus').hidden = !selectedTool;
-  $('placementStatus').classList.toggle('danger', selectedTool === 'demolish');
-  if (selectedTool === 'demolish') {
-    setText('placementStatus','拆除模式 · 点击建筑，返还 50% 点数 · Esc 退出');
-    setText('buildHint','点击要拆除的设施，返还一半专注点（向下取整）');
-  } else if (selectedTool) {
-    const item = CATALOG.find(x => x.id === selectedTool);
-    setText('placementStatus',`${item.name} · ${item.cost} 点 · 点击${item.id === 'harbor'?'临水陆地':'草地'}建造 · Esc 退出`);
-    setText('buildHint',`${item.name}：人口 +${item.population} · GDP +${item.gdp}`);
-  } else setText('buildHint','选择一座建筑，再点击地图上的草地');
-  render();
+  world.setRotation?.(rotation);
+  updateToolHint();
+  if (selectedTool) setBuildDock(false);
+  renderBuildings();
+}
+function rotateTool() {
+  if (!selectedTool || selectedTool === 'demolish') return;
+  rotation = rotation ? 0 : 1;
+  world.setRotation?.(rotation); updateToolHint();setBuildDock(false);
+}
+function inspectBuilding(x,y) {
+  const found = getBuildingAt(state,x,y);
+  if (!found) return;
+  const {building,definition:item} = found;
+  const next = CATALOG.find(c => c.id === item.upgradeTo);
+  const eligibility = next ? canUpgradeBuilding(state,found.x,found.y,(a,b)=>terrainAt(a,b,state.seed)) : null;
+  openModal('inspect', `<div class="modal-eyebrow">A PIECE OF YOUR TOWN</div><div class="inspect-header"><canvas class="building-icon" data-building="${item.id}"></canvas><div><h2>${item.name}</h2><p class="modal-subtitle">${building.width || 1} × ${building.height || 1} 格 · T${item.tier || 1} · 坐标 ${found.x}, ${found.y}</p></div></div><p class="modal-subtitle">${item.description}</p><div class="stats-grid"><div class="stat-box"><span>提供人口</span><strong>${item.population}</strong></div><div class="stat-box"><span>城市 GDP</span><strong>${item.gdp}</strong></div><div class="stat-box"><span>投入点数</span><strong>${building.paid ?? item.cost}</strong></div></div>${next ? `<div class="upgrade-card"><div><span class="eyebrow">下一阶段 · T${next.tier || 2}</span><h3>${next.name}</h3><p>Lv.${next.level} · 占地 ${building.rotation?next.height:next.width} × ${building.rotation?next.width:next.height} 格 · 需补 ${Math.max(0,next.cost-(building.paid??item.cost))} 点</p><p>${eligibility.ok?'已满足升级条件，扩建将占用周围空地。':esc(eligibility.message)}</p></div><button class="primary-button" data-action="upgrade-building" data-x="${found.x}" data-y="${found.y}" ${eligibility.ok?'':'disabled'}>扩建升级</button></div>` : '<p class="inline-note">此设施已是该系列的最高阶段。</p>'}<div class="modal-actions"><button class="secondary-button" data-action="close">继续逛逛</button><button class="secondary-button" data-action="remove-building" data-x="${found.x}" data-y="${found.y}">拆除 · 返还 ${Math.floor((building.paid??item.cost)/2)} 点</button></div>`);
 }
 function handleTile(tile) {
   if (!tile) return;
@@ -167,52 +205,80 @@ function handleTile(tile) {
     toast(result.message,!result.ok); return;
   }
   if (selectedTool) {
-    const result = buildAt(state,selectedTool,x,y,terrain,(a,b) => terrainAt(a,b,state.seed));
-    if (result.ok) { if (!persist()) return; render(); if (result.levelUp) { toast(`小镇升级了！Lv.${result.level} · ${cityStats(state).title}`); } }
+    const result = buildAt(state,selectedTool,x,y,(a,b) => terrainAt(a,b,state.seed),rotation);
+    if (result.ok) { if (!persist()) return; render(); if (result.levelUp) toast(`小镇升级了！Lv.${cityStats(state).level} · ${cityStats(state).title}`); }
     toast(result.message,!result.ok); return;
   }
-  const building = state.buildings[`${x},${y}`];
-  if (building) {
-    const item = CATALOG.find(c => c.id === building.type);
-    openModal('inspect', `<div class="modal-eyebrow">A PIECE OF YOUR TOWN</div><div class="inspect-header"><canvas class="building-icon" data-building="${item.id}"></canvas><div><h2>${item.name}</h2><p class="modal-subtitle">坐标 ${x}, ${y} · ${item.category}</p></div></div><p class="modal-subtitle">${item.description}</p><div class="stats-grid"><div class="stat-box"><span>提供人口</span><strong>${item.population}<small>人</small></strong></div><div class="stat-box"><span>城市 GDP</span><strong>${item.gdp}</strong></div><div class="stat-box"><span>建设花费</span><strong>${item.cost}<small>点</small></strong></div></div><div class="modal-actions"><button class="secondary-button" data-action="close">继续逛逛</button><button class="secondary-button" data-action="remove-building" data-x="${x}" data-y="${y}">拆除 · 返还 ${Math.floor(item.cost/2)} 点</button></div>`);
-  } else {
-    const names = {grass:'草地，适合建起新的生活',forest:'林地，建设时会清理这片树木',water:'水域，港口可以建在岸边',mountain:'山地，保留一片远山的风景'};
-    toast(`${x}, ${y} · ${names[terrain] || '选择下方的设施，开始建设'}`);
-  }
+  if (getBuildingAt(state,x,y)) inspectBuilding(x,y);
+  else toast(`${x}, ${y} · ${{grass:'草地',forest:'林地',water:'水域：可铺设桥梁',mountain:'山地：可开凿隧道'}[terrain] || terrain}`);
+}
+function applyView(view) {
+  currentView = view;
+  $('homePage').hidden = view !== 'home';
+  $('townPage').hidden = view !== 'town';
+  $('modulePage').hidden = ['home','town'].includes(view);
+  document.body.dataset.view = view;
+  document.querySelectorAll('[data-nav]').forEach(b => {b.classList.toggle('active',b.dataset.nav===view); b.setAttribute('aria-current',b.dataset.nav===view?'page':'false');});
+  world.setActive?.(view === 'town');
+  updateClock();
+}
+function showModule(view,content) {
+  applyView(view);
+  $('pageContent').innerHTML = content;
+  $('modulePage').setAttribute('aria-label',({stats:'时光记录',catalog:'城市图鉴',checkin:'每日签到',levels:'城市成长',help:'小镇指南',settings:'小镇设置'})[view]);
+  fillBuildingIcons($('pageContent'));
+}
+function navigate(view,writeHash=true) {
+  if (!views.has(view)) view='home';
+  closeModal();
+  if (writeHash && location.hash !== '#'+view) history.pushState(null,'','#'+view);
+  applyView(view);
+  pageRenderers[view]?.();
+  window.scrollTo({top:0,behavior:'instant'});
 }
 function openModal(type, content) {
   modalType = type;
   $('modalContent').innerHTML = content;
   if (!$('modal').open) $('modal').showModal();
   fillBuildingIcons($('modalContent'));
-  document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('active', b.dataset.nav === type));
+
 }
 function closeModal() {
   $('modal').close(); modalType = null;
-  document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('active',b.dataset.nav === 'city'));
+
 }
 function openStats() {
   const today = todayStats(state), week = weekStats(state), max = Math.max(30,...week.map(d => d.minutes));
   const totalMinutes = state.sessions.reduce((sum,s) => sum+s.minutes,0);
-  openModal('stats', `<div class="modal-eyebrow">LITTLE MOMENTS, LASTING GROWTH</div><h2>时光有迹可循</h2><p class="modal-subtitle">那些认真度过的分钟，都在这里悄悄发光。</p><div class="stats-grid"><div class="stat-box"><span>今日专注</span><strong>${today.minutes}<small>分钟</small></strong></div><div class="stat-box"><span>今日完成</span><strong>${today.count}<small>个目标</small></strong></div><div class="stat-box"><span>累计专注</span><strong>${totalMinutes}<small>分钟</small></strong></div></div><h3>最近七天 <span style="float:right;color:#a1ac90;font-size:10px">共 ${week.reduce((s,d)=>s+d.minutes,0)} 分钟</span></h3><div class="week-chart" role="img" aria-label="最近七日专注时长：${week.map(d=>`${d.label} ${d.minutes}分钟`).join('，')}">${week.map(d=>`<div class="bar-group ${d.today?'today':''}"><span class="bar-value">${d.minutes}</span><div class="bar" style="height:${Math.max(2,d.minutes/max*115)}px"></div><span class="bar-label">${d.today?'今天':d.label}</span></div>`).join('')}</div><h3>专注足迹 <span style="float:right;color:#a1ac90;font-size:10px">最近 50 次</span></h3>${state.sessions.length?`<div class="session-list">${[...state.sessions].sort((a,b)=>b.completedAt-a.completedAt).slice(0,50).map(s=>`<div class="session-row"><div><strong>${esc(s.task)}</strong><small>${new Date(s.completedAt).toLocaleString('zh-CN',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small></div><span>${s.minutes} 分钟 · +${s.points} 点</span></div>`).join('')}</div>`:'<div class="empty-state">你的第一段专注时光，还在等待开始。<br>不必很多，认真度过一分钟也很好。</div>'}`);
+  showModule('stats', `<div class="modal-eyebrow">LITTLE MOMENTS, LASTING GROWTH</div><h2>时光有迹可循</h2><p class="modal-subtitle">那些认真度过的分钟，都在这里悄悄发光。</p><div class="stats-grid"><div class="stat-box"><span>今日专注</span><strong>${today.minutes}<small>分钟</small></strong></div><div class="stat-box"><span>今日完成</span><strong>${today.count}<small>个目标</small></strong></div><div class="stat-box"><span>累计专注</span><strong>${totalMinutes}<small>分钟</small></strong></div></div><h3>最近七天 <span style="float:right;color:#a1ac90;font-size:10px">共 ${week.reduce((s,d)=>s+d.minutes,0)} 分钟</span></h3><div class="week-chart" role="img" aria-label="最近七日专注时长：${week.map(d=>`${d.label} ${d.minutes}分钟`).join('，')}">${week.map(d=>`<div class="bar-group ${d.today?'today':''}"><span class="bar-value">${d.minutes}</span><div class="bar" style="height:${Math.max(2,d.minutes/max*115)}px"></div><span class="bar-label">${d.today?'今天':d.label}</span></div>`).join('')}</div><h3>专注足迹 <span style="float:right;color:#a1ac90;font-size:10px">最近 50 次</span></h3>${state.sessions.length?`<div class="session-list">${[...state.sessions].sort((a,b)=>b.completedAt-a.completedAt).slice(0,50).map(s=>`<div class="session-row"><div><strong>${esc(s.task)}</strong><small>${new Date(s.completedAt).toLocaleString('zh-CN',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small></div><span>${s.minutes} 分钟 · +${s.points} 点</span></div>`).join('')}</div>`:'<div class="empty-state">你的第一段专注时光，还在等待开始。<br>不必很多，认真度过一分钟也很好。</div>'}`);
 }
+function catalogCards() {
+  const level = cityStats(state).level;
+  const items = CATALOG.filter(item => (catalogCategory==='全部'||item.category===catalogCategory) && (!catalogQuery||item.name.includes(catalogQuery)) && (!catalogUnlocked||item.level<=level));
+  return items.map(item=>`<article class="catalog-item ${item.level>level?'locked':''}"><span class="catalog-tag">${item.category} · T${item.tier || 1}</span><canvas class="building-icon" data-building="${item.id}" aria-hidden="true"></canvas><h3>${item.name}</h3><p>${item.description}</p><small>${item.width} × ${item.height} 格 · ${terrainLabel(item)}</small><small>人口 +${item.population} · GDP +${item.gdp}</small><footer><span>${item.cost} 专注点</span><small>Lv.${item.level} ${item.level>level?'解锁':'已解锁'}</small></footer><button data-catalog-build="${item.id}">${item.level>level?'查看成长目标':'前往小镇建造 →'}</button></article>`).join('') || '<div class="empty-state">没有符合条件的设施。</div>';
+}
+function updateCatalogCards() { $('catalogGrid').innerHTML=catalogCards(); fillBuildingIcons($('catalogGrid')); }
 function openCatalog() {
   const level = cityStats(state).level;
-  openModal('catalog', `<div class="modal-eyebrow">YOUR TOWN, YOUR POSSIBILITIES</div><h2>小城的无限可能</h2><p class="modal-subtitle">13 种设施，慢慢收集一座完整的城市。当前 Lv.${level} · ${CATALOG.filter(x=>x.level<=level).length} 种已解锁</p><div class="catalog-grid">${CATALOG.map(item=>`<article class="catalog-item ${item.level>level?'locked':''}"><span class="catalog-tag">${item.category}</span><canvas class="building-icon" data-building="${item.id}" aria-hidden="true"></canvas><h3>${item.name}</h3><p>${item.description}</p><small>人口 +${item.population} · GDP +${item.gdp}</small><footer><span>${item.cost} 专注点</span><small>Lv.${item.level} ${item.level>level?'解锁':'已解锁'}</small></footer><button data-catalog-build="${item.id}">${item.level>level?'查看升级条件':'选择建造 →'}</button></article>`).join('')}</div>`);
+  showModule('catalog', `<div class="modal-eyebrow">YOUR TOWN, YOUR POSSIBILITIES</div><h2>小城的无限可能</h2><p class="modal-subtitle">${CATALOG.length} 种设施，从一间小屋到辽阔机场。Lv.${level} · ${CATALOG.filter(x=>x.level<=level).length} 种已解锁</p><div class="catalog-controls"><input type="search" id="catalogSearch" placeholder="搜索学校、港口、铁路…" value="${esc(catalogQuery)}" aria-label="搜索图鉴"><label><input type="checkbox" id="catalogUnlocked" ${catalogUnlocked?'checked':''}> 只看已解锁</label></div><div class="category-tabs catalog-tabs">${['全部','居住','交通','公共','生产','景观'].map(c=>`<button data-catalog-category="${c}" class="${catalogCategory===c?'active':''}">${c}</button>`).join('')}</div><div class="catalog-grid" id="catalogGrid">${catalogCards()}</div>`);
 }
 function openLevels() {
   const stats = cityStats(state);
-  openModal('levels', `<div class="modal-eyebrow">ONE STEP AT A TIME</div><h2>让小镇，慢慢长大</h2><p class="modal-subtitle">人口或 GDP 达到任意一项条件即可升级。已解锁的设施会一直为你保留。</p><div class="stats-grid"><div class="stat-box"><span>当前等级</span><strong>${stats.level}</strong></div><div class="stat-box"><span>小镇人口</span><strong>${stats.population}</strong></div><div class="stat-box"><span>城市 GDP</span><strong>${stats.gdp}</strong></div></div>${LEVELS.map(l=>`<div class="milestone"><span class="level-medallion">${l.level}</span><div><h3>${l.title}</h3><p>${l.level===1?'一片土地，一个全新的开始':`人口 ${l.population} 人 / GDP ${l.gdp}，满足一项`}<br>解锁：${CATALOG.filter(x=>x.level===l.level).map(x=>x.name).join('、')}</p></div>${l.level<=stats.level?'<span class="achieved">已抵达 ✓</span>':''}</div>`).join('')}`);
-}
-function openFocusSpace() {
-  openModal('focus', `<div class="focus-space"><div class="modal-eyebrow">JUST YOU AND THIS MOMENT</div><div class="focus-decoration">✧ ❧ ✧</div><h2 id="spaceTask"></h2><div class="large-timer" id="spaceTimer"></div><p class="modal-subtitle" id="spaceStatus"></p><div class="modal-actions"><button class="primary-button" id="spaceStart" data-action="focus-toggle"></button><button class="secondary-button" data-action="close">回到小镇</button></div><p class="inline-note">完成 ${state.focus?state.focus.duration/60:chosenMinutes} 分钟，将收获同等数量的专注点。<br>暂停会保留进度；浏览器刷新后会继续计时。</p></div>`);
-  updateClock();
+  showModule('levels', `<div class="modal-eyebrow">ONE STEP AT A TIME</div><h2>让小镇，慢慢长大</h2><p class="modal-subtitle">人口或 GDP 达到任意一项条件即可升级。已解锁的设施会一直为你保留。</p><div class="stats-grid"><div class="stat-box"><span>当前等级</span><strong>${stats.level}</strong></div><div class="stat-box"><span>小镇人口</span><strong>${stats.population}</strong></div><div class="stat-box"><span>城市 GDP</span><strong>${stats.gdp}</strong></div></div>${LEVELS.map(l=>`<div class="milestone"><span class="level-medallion">${l.level}</span><div><h3>${l.title}</h3><p>${l.level===1?'一片土地，一个全新的开始':`人口 ${l.population} 人 / GDP ${l.gdp}，满足一项`}<br>解锁：${CATALOG.filter(x=>x.level===l.level).map(x=>x.name).join('、')}</p></div>${l.level<=stats.level?'<span class="achieved">已抵达 ✓</span>':''}</div>`).join('')}`);
 }
 function openSettings() {
-  openModal('settings', `<div class="modal-eyebrow">MAKE YOURSELF AT HOME</div><h2>关于你的小镇</h2><p class="modal-subtitle">给这里起一个名字，留下一份属于自己的时光。</p><form id="settingsForm"><div class="field"><label for="cityNameInput">小镇名字</label><input id="cityNameInput" value="${esc(state.cityName)}" maxlength="24" required></div><button class="primary-button" type="submit">保存名字</button></form><div class="settings-row"><div><strong>带走这段时光</strong><p>导出城市、专注记录和当前计时进度。</p></div><button class="secondary-button" data-action="export">导出存档</button></div><div class="settings-row"><div><strong>回到熟悉的小镇</strong><p>导入存档会替换此浏览器的现有进度。</p></div><button class="secondary-button" data-action="import">导入存档</button></div><p class="inline-note">当前为本地存档模式，不会自动跨设备同步。更换浏览器或清理网站数据前，记得导出一份备份。<br>世界种子：${state.seed} · 版本 0.1</p>`);
+  showModule('settings', `<div class="modal-eyebrow">MAKE YOURSELF AT HOME</div><h2>关于你的小镇</h2><p class="modal-subtitle">给这里起一个名字，留下一份属于自己的时光。</p><form id="settingsForm"><div class="field"><label for="cityNameInput">小镇名字</label><input id="cityNameInput" value="${esc(state.cityName)}" maxlength="24" required></div><button class="primary-button" type="submit">保存名字</button></form><div class="settings-row"><div><strong>带走这段时光</strong><p>导出城市、专注记录和当前计时进度。</p></div><button class="secondary-button" data-action="export">导出存档</button></div><div class="settings-row"><div><strong>回到熟悉的小镇</strong><p>导入存档会替换此浏览器的现有进度。</p></div><button class="secondary-button" data-action="import">导入存档</button></div><p class="inline-note">当前为本地存档模式，不会自动跨设备同步。更换浏览器或清理网站数据前，记得导出一份备份。<br>世界种子：${state.seed} · 版本 0.2</p>`);
+}
+function openCheckin() {
+  const c = getCheckinStatus(state);
+  const now = new Date(), y=now.getFullYear(), m=now.getMonth();
+  const offset=(new Date(y,m,1).getDay()+6)%7, count=new Date(y,m+1,0).getDate();
+  const days = new Set(c.daysInMonth);
+  const cell = day => {const key=localDateKey(new Date(y,m,day)); return `<div class="calendar-day ${days.has(key)?'signed':''} ${key===c.today?'today':''}"><span>${day}</span><small>${days.has(key)?'已签到':key===c.today?'今天':''}</small></div>`;};
+  showModule('checkin', `<div class="modal-eyebrow">SHOW UP, GROW A LITTLE</div><h2>每一次到来，都有回响</h2><p class="modal-subtitle">给专注一个小小的开始，也给小城一份生长的礼物。</p><div class="checkin-rewards"><article class="reward-card daily"><span>每日签到</span><strong>+10 <small>专注点</small></strong><p>每天来一次，小城近一点。</p><button class="primary-button" data-claim="daily" ${c.todayClaimed?'disabled':''}>${c.todayClaimed?'今日已签到 ✓':'领取今日奖励'}</button></article><article class="reward-card"><span>每周相伴</span><strong>+40 <small>专注点</small></strong><p>本周已签到 <b>${c.weekDays}</b> / 5 天</p><progress max="5" value="${Math.min(5,c.weekDays)}"></progress><button class="secondary-button" data-claim="weekly" ${c.weekClaimed||!c.weekEligible?'disabled':''}>${c.weekClaimed?'本周已领取 ✓':c.weekEligible?'领取每周奖励':'满 5 天可领取'}</button></article><article class="reward-card"><span>每月生长</span><strong>+150 <small>专注点</small></strong><p>本月达标周 <b>${c.qualifiedWeeks}</b> / 3 周</p><progress max="3" value="${Math.min(3,c.qualifiedWeeks)}"></progress><button class="secondary-button" data-claim="monthly" ${c.monthClaimed||!c.monthEligible?'disabled':''}>${c.monthClaimed?'本月已领取 ✓':c.monthEligible?'领取每月奖励':'满 3 个达标周可领取'}</button></article></div><section class="calendar-card"><div class="calendar-heading"><h3>${y} 年 ${m+1} 月</h3><span>本月 ${[...days].filter(d=>d.startsWith(c.monthKey)).length} 天相伴</span></div><div class="calendar-grid">${['一','二','三','四','五','六','日'].map(d=>`<span class="weekday">${d}</span>`).join('')}${Array.from({length:offset},()=>'<div class="calendar-blank"></div>').join('')}${Array.from({length:count},(_,i)=>cell(i+1)).join('')}</div></section><div class="rule-note"><h3>签到规则</h3><p>每天可领 10 点；每个自然周（周一至周日）签到至少 5 天，可额外领取 40 点。每月有 3 个自然周各签到至少 5 天，可额外领取 150 点；跨月周只计算其中属于当月的签到日。</p><p>无需连续签到。每种奖励每个周期仅可领取一次，请在当前周／月结束前领取。签到按设备本地日期计算，并随城市存档保存。</p></div>`);
 }
 function openHelp() {
-  openModal('help', `<div class="modal-eyebrow">WELCOME TO FOCUCITY</div><h2>从一段专注开始</h2><p class="modal-subtitle">在 FocuCity，时间不是催促你的指针，而是让城市生长的种子。</p><ol class="help-steps"><li><div><strong>给自己一个小目标</strong><p>填写任务，选择 1–240 分钟。完整完成后，每分钟获得 1 专注点。暂停不计时，提前结束不发放奖励。</p></div></li><li><div><strong>把用心变成风景</strong><p>选中设施后，点击草地或林地建设。第一间林间小屋需要 15 点。山地和水面不能直接建设，港口需要紧邻水面的陆地。</p></div></li><li><div><strong>让生活在这里发生</strong><p>道路上会有散步的居民，港口旁会有来访的帆船。人口或 GDP 达标后自动升级，解锁医院、学校、工厂和机场。</p></div></li><li><div><strong>慢慢探索，不必着急</strong><p>拖动探索世界，滚轮或右侧按钮缩放。选择拆除工具可返还一半点数（向下取整）。Esc 退出建造。地图获得焦点后，也可用方向键选地块、回车建设。</p></div></li></ol><p class="inline-note">这是 FocuCity 的第一版：经济数值由设施累计，居民与船只为环境动画。所有进度自动保存在此浏览器，点击左下角头像可以导出备份。</p>`);
+  showModule('help', `<div class="modal-eyebrow">WELCOME TO FOCUCITY</div><h2>从一段专注，到一座城市</h2><p class="modal-subtitle">每个页面，各有一段属于自己的时光。</p><ol class="help-steps"><li><div><strong>从首页安静开始</strong><p>填写任务，选择 1–240 分钟。完成每分钟获得 1 点；暂停保留进度，提前结束不奖励。切换页面不会停止计时。</p></div></li><li><div><strong>为城市留出成长的空间</strong><p>在小镇打开「建设小镇」，选择设施，绿色范围代表可建。R 旋转长宽，Esc 取消。大型设施占多格，点击其中任一格可查看或拆除整座设施。</p></div></li><li><div><strong>连接，才有来往</strong><p>道路连成线后出现行人和汽车；桥梁建在水上，隧道穿过山地。两个火车站用铁路连接，两个地铁站用地铁线连接后自动开行。港口之间须有连通水域，机场至少两座才会有往返航班。交通工具自动运行，不需要逐辆购买。</p><p>地铁线是地下设施，可穿过不同地形；当前每个地块只放一项设施，请为站点和线路预留位置。点击「地铁图层」查看线路。</p></div></li><li><div><strong>从学校，到拥有操场的校园</strong><p>城市分为 ${LEVELS.length} 个等级，人口或 GDP 达到其中一项即升级。选中已建设施可查看下一级和扩建条件；只补差价，扩建需要周围有足够空地。高等级设施也可直接新建。</p></div></li><li><div><strong>把进度好好留下</strong><p>签到、城市和专注自动保存在此浏览器。设置中可导入或导出备份。旧版建筑继续保留原有一格占地，升级后才会扩展；没有账号云同步。</p></div></li></ol><div class="guide-actions"><button class="primary-button" data-route="home">开始专注</button><button class="secondary-button" data-route="settings">存档与设置</button></div>`);
 }
 function openSound() {
   openModal('sound', `<div class="modal-eyebrow">A SOFTER KIND OF SILENCE</div><h2>听见安静的声音</h2><p class="modal-subtitle">原创合成环境音，陪你度过一段不被打扰的时光。</p><div class="sound-options">${[['forest','leaf','林间微风'],['rain','cloud','窗外细雨'],['piano','music','午后轻琴']].map(([id,i,name])=>`<button class="sound-option ${musicMode===id?'selected':''}" data-sound="${id}">${icon(i)}${name}</button>`).join('')}</div><h3>让声音轻一点</h3><input class="volume-control" id="volumeControl" type="range" min="0" max="1" step=".01" value="${volume}" aria-label="音乐音量"><div class="modal-actions"><button class="primary-button" data-action="sound-toggle">${sound.active?'暂停声音':'开始播放'}</button></div>`);
@@ -268,54 +334,73 @@ $('zoomIn').addEventListener('click',()=>{world.zoomBy(.15);setText('zoomLabel',
 $('zoomOut').addEventListener('click',()=>{world.zoomBy(-.15);setText('zoomLabel',Math.round(world.getView().zoom*100)+'%');});
 $('centerMap').addEventListener('click',()=>{world.center();setText('zoomLabel',Math.round(world.getView().zoom*100)+'%');});
 $('daylightButton').addEventListener('click',()=>{const evening=$('cityView').classList.toggle('evening');$('daylightButton').innerHTML=icon('sun')+(evening?'暮色':'日光');$('daylightButton').title=evening?'切换日光':'切换暮色';});
-$('openCatalog').addEventListener('click',openCatalog);
-$('viewStats').addEventListener('click',openStats);
-$('cityNameButton').addEventListener('click',openSettings);
-$('levelButton').addEventListener('click',openLevels);
-$('pointsButton').addEventListener('click',()=>toast('每完成 1 分钟专注，获得 1 专注点。用它建造自己的城市。'));
+$('openCatalog').addEventListener('click',()=>navigate('catalog'));
+$('viewStats').addEventListener('click',()=>navigate('stats'));
+$('cityNameButton').addEventListener('click',()=>navigate('settings'));
+$('levelButton').addEventListener('click',()=>navigate('levels'));
+$('pointsButton').addEventListener('click',()=>navigate('checkin'));
 $('soundButton').addEventListener('click',toggleSound);
 $('soundSettings').addEventListener('click',openSound);
 $('closeModal').addEventListener('click',closeModal);
 $('modal').addEventListener('click',e=>{if(e.target===$('modal')){const r=$('modal').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeModal();}});
-$('modal').addEventListener('cancel',()=>{modalType=null;document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav==='city'));});
-document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>{({city:closeModal,focus:openFocusSpace,stats:openStats,catalog:openCatalog,settings:openSettings,help:openHelp})[b.dataset.nav]?.();}));
-$('modalContent').addEventListener('click',async event=>{
+$('modal').addEventListener('cancel',()=>{modalType=null;});
+document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.nav)));
+document.addEventListener('click',async event=>{
   const b=event.target.closest('button');if(!b)return;
-  if(b.dataset.catalogBuild){const item=CATALOG.find(x=>x.id===b.dataset.catalogBuild);if(item.level>cityStats(state).level)openLevels();else{closeModal();selectTool(item.id);}return;}
+  if(b.dataset.route){navigate(b.dataset.route);return;}
+  if(b.dataset.claim){const result=claimCheckin(state,b.dataset.claim); if(result.ok){if(!persist())return;render();} toast(result.message,!result.ok);return;}
+  if(b.dataset.catalogCategory){catalogCategory=b.dataset.catalogCategory;openCatalog();return;}
+  if(b.dataset.catalogBuild){const item=CATALOG.find(x=>x.id===b.dataset.catalogBuild);if(item.level>cityStats(state).level)navigate('levels');else{navigate('town');selectTool(item.id);}return;}
   if(b.dataset.sound){musicMode=b.dataset.sound;if(sound.active)await sound.setMode(musicMode);setText('soundLabel',({forest:'林间白噪音',rain:'窗外细雨',piano:'午后轻琴'})[musicMode]);openSound();return;}
   switch(b.dataset.action){
-    case 'close':case 'reward-close':closeModal();break;
+    case 'close':closeModal();break;
+    case 'reward-close':navigate('town');break;
     case 'focus-toggle':focusAction();break;
     case 'cancel-focus':{if(checkCompletion())break;const result=cancelFocus(state);if(!result.ok){toast(result.message,true);break;}if(!persist())break;render();closeModal();toast(result.message);break;}
     case 'export':exportSave();break;
     case 'import':$('importFile').click();break;
     case 'sound-toggle':await toggleSound();break;
+    case 'upgrade-building':{const x=Number(b.dataset.x),y=Number(b.dataset.y);const result=upgradeBuilding(state,x,y,(a,c)=>terrainAt(a,c,state.seed));if(result.ok){if(!persist())break;render();inspectBuilding(x,y);}toast(result.message,!result.ok);break;}
     case 'remove-building':{const result=demolishAt(state,Number(b.dataset.x),Number(b.dataset.y));if(!result.ok){toast(result.message,true);break;}if(!persist())break;render();closeModal();toast(result.message);break;}
-    case 'confirm-import':{if(!pendingImport)break;state=pendingImport;pendingImport=null;syncDurationFromState(true);selectedTool=null;world.setTool(null);if(!persist())break;render();world.center();closeModal();toast('欢迎回来，存档已恢复。');checkCompletion();break;}
+    case 'confirm-import':{if(!pendingImport)break;state=pendingImport;pendingImport=null;syncDurationFromState(true);selectedTool=null;world.setTool(null);if(!persist())break;updateToolHint();render();if(currentView==='settings')openSettings();world.center();closeModal();toast('欢迎回来，存档已恢复。');checkCompletion();break;}
   }
 });
-$('modalContent').addEventListener('submit',event=>{if(event.target.id!=='settingsForm')return;event.preventDefault();const name=$('cityNameInput').value.trim();if(!name)return;state.cityName=name.slice(0,24);if(!persist())return;render();closeModal();toast('小镇有了一个好听的名字。');});
-$('modalContent').addEventListener('input',event=>{if(event.target.id==='volumeControl'){volume=Number(event.target.value);sound.setVolume(volume);}});
+$('pageContent').addEventListener('submit',event=>{if(event.target.id!=='settingsForm')return;event.preventDefault();const name=$('cityNameInput').value.trim();if(!name)return;state.cityName=name.slice(0,24);if(!persist())return;render();toast('小镇有了一个好听的名字。');});
+document.addEventListener('input',event=>{if(event.target.id==='volumeControl'){volume=Number(event.target.value);sound.setVolume(volume);}if(event.target.id==='catalogSearch'){catalogQuery=event.target.value.trim();updateCatalogCards();}if(event.target.id==='catalogUnlocked'){catalogUnlocked=event.target.checked;updateCatalogCards();}});
 let pendingImport=null;
 $('importFile').addEventListener('change',async event=>{
   const file=event.target.files[0];event.target.value='';if(!file)return;
   if(file.size>20*1024*1024)return toast('存档过大，请使用 20 MB 以内的 JSON 文件。',true);
   try{const result=validateSave(JSON.parse(await file.text()));if(!result.ok)return toast(result.message,true);pendingImport=result.state;const stats=cityStats(pendingImport);openModal('import',`<div class="modal-eyebrow">WELCOME BACK</div><h2>恢复「${esc(pendingImport.cityName)}」？</h2><p class="modal-subtitle">这份存档包含 ${stats.buildingCount} 座设施、${pendingImport.sessions.length} 条专注记录，以及 ${pendingImport.points} 专注点。<br>导入后将替换当前进度，建议先导出当前存档。</p><div class="modal-actions"><button class="secondary-button" data-action="export">先导出当前存档</button><button class="primary-button" data-action="confirm-import">恢复这份存档</button></div>`);}catch{toast('无法读取这个存档，请选择有效的 JSON 文件。',true);}
 });
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('modal').open&&selectedTool){selectTool(null);}});
+document.addEventListener('keydown',event=>{if(/INPUT|TEXTAREA|SELECT/.test(event.target.tagName))return;if(event.key==='Escape'&&!$('modal').open&&selectedTool)selectTool(null);if(event.key.toLowerCase()==='r'&&currentView==='town'&&!$('modal').open)rotateTool();});
 window.addEventListener('storage',event=>{
   if(event.key!==STORAGE_KEY&&event.key!==null)return;
   state=loadState();syncDurationFromState(true);render();
-  if(modalType==='stats')openStats();
-  if(modalType==='catalog')openCatalog();
-  if(modalType==='levels')openLevels();
+  if(currentView==='settings')openSettings();
 });
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkCompletion();render();}});
+const pageRenderers={stats:openStats,catalog:openCatalog,levels:openLevels,settings:openSettings,help:openHelp,checkin:openCheckin};
+$('toggleBuild').addEventListener('click',()=>setBuildDock($('buildDock').hidden));
+$('closeBuild').addEventListener('click',()=>setBuildDock(false));
+$('rotateBuilding').addEventListener('click',rotateTool);
+$('rotatePlacement').addEventListener('click',rotateTool);
+$('cancelPlacement').addEventListener('click',()=>selectTool(null));
+$('buildSearch').addEventListener('input',renderBuildings);
+$('buildUnlocked').addEventListener('change',renderBuildings);
+$('metroLayer').addEventListener('click',()=>{const show=$('metroLayer').getAttribute('aria-pressed')!=='true';$('metroLayer').setAttribute('aria-pressed',String(show));world.setShowMetro?.(show);});
+window.addEventListener('popstate',()=>navigate(location.hash.slice(1),false));
+window.addEventListener('hashchange',()=>{if(location.hash.slice(1)!==currentView)navigate(location.hash.slice(1),false);});
 const now=new Date();
 setText('dateLabel',now.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'}));
 setText('greeting',now.getHours()<12?'早安，给自己一点生长的时间':now.getHours()<18?'午后好，给自己一点生长的时间':'晚上好，给自己一点安静的时间');
 render();
+navigate(location.hash.slice(1)||'home',false);
+updateToolHint();
 // Persist a fresh world's seed immediately; an offline completion settles first.
 if (!checkCompletion()) persist();
 setText('zoomLabel',Math.round(world.getView().zoom*100)+'%');
-setInterval(()=>{if(!checkCompletion())updateClock();},500);
+let renderedDate=localDateKey();
+setInterval(()=>{if(!checkCompletion())updateClock();const today=localDateKey();if(today!==renderedDate){renderedDate=today;setText('dateLabel',new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'}));render();}},500);
+
+setInterval(()=>{if(currentView!=='town')return;const t=world.getTrafficSummary?.();if(t)setText('networkStatus',`交通运行 · 汽车 ${t.cars||0} · 轮船 ${t.boats||0} · 火车 ${t.trains||0} · 地铁 ${t.metros||0} · 飞机 ${t.planes||0}`);},2000);

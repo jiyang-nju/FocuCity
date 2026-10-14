@@ -88,7 +88,7 @@ test('terrain, occupancy, unlocks and shore requirements are checked before spen
   assert.equal(state.points, 998);
   state.levelUnlocked = 3;
   assert.equal(buildAt(state, 'harbor', 1, 0, 'grass', () => 'grass').ok, false);
-  assert.equal(buildAt(state, 'harbor', 1, 0, 'grass', (x, y) => x === 2 && y === 0 ? 'water' : 'grass').ok, true);
+  assert.equal(buildAt(state, 'harbor', 1, 0, 'grass', (x, y) => x === 3 && y === 0 ? 'water' : 'grass').ok, true);
   assert.equal(state.points, 928);
 });
 
@@ -121,7 +121,7 @@ test('malformed saves are rejected or safely pruned without trusting extra prope
   const restored = validateSave(data);
   assert.equal(restored.ok, true);
   assert.equal(restored.state.points, 0);
-  assert.deepEqual(restored.state.buildings, { '0,0': { type: 'cottage' } });
+  assert.deepEqual(restored.state.buildings, { '0,0': { type: 'cottage', width: 1, height: 1, rotation: 0, paid: 15 } });
   assert.equal(restored.state.sessions.length, 0);
   assert.equal(restored.state.focus, null);
   assert.equal({}.polluted, undefined);
