@@ -5,8 +5,8 @@ import { CATALOG, LEVELS, createInitialState, getFootprint, getBuildingAt, canBu
 const grass = () => 'grass';
 function sandbox() { const state = createInitialState(1); state.points = 10000; state.levelUnlocked = 12; return state; }
 
-test('catalog provides 45 dimensioned facilities across twelve levels and valid expansion chains', () => {
-  assert.equal(CATALOG.length, 45);
+test('catalog provides 57 dimensioned facilities across twelve levels and valid expansion chains', () => {
+  assert.equal(CATALOG.length, 57);
   assert.equal(LEVELS.length, 12);
   const ids = new Set(CATALOG.map(item => item.id));
   assert.equal(ids.size, CATALOG.length);

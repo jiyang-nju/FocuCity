@@ -8,18 +8,24 @@ export const CATALOG = Object.freeze([
   { id:'road', name:'石板小路', category:'交通', description:'连接街坊，居民会沿相邻道路散步。', cost:2, level:1, population:0, gdp:0, width:1, height:1, transport:'road', upgradeTo:'asphalt' },
   { id:'garden', name:'花间庭院', category:'景观', description:'一块可以慢下来的绿地，可以扩建为公园。', cost:5, level:1, population:0, gdp:2, width:1, height:1, family:'park', tier:1, upgradeTo:'park' },
   { id:'shop', name:'街角商店', category:'生产', description:'面包的香气，是小镇醒来的信号。', cost:25, level:1, population:4, gdp:50, width:1, height:1 },
+  { id:'convenienceStore', name:'街角便利店', category:'商业', description:'一格小店备齐日常所需，可逐步扩建为城市商场。', cost:20, level:1, population:3, gdp:35, width:1, height:1, family:'retail', tier:1, upgradeTo:'supermarket' },
   { id:'apartment', name:'温馨小区', category:'居住', description:'四格庭院与住宅，容纳更多生活。', cost:45, level:2, population:45, gdp:60, width:2, height:2, family:'housing', tier:2, upgradeTo:'residentialTower' },
   { id:'school', name:'小镇小学', category:'公共', description:'小小校园让好奇心发芽；扩建后拥有操场。', cost:35, level:2, population:4, gdp:90, width:2, height:2, family:'school', tier:1, upgradeTo:'highschool' },
   { id:'clinic', name:'社区诊所', category:'公共', description:'家门口的医疗服务，可逐级扩建为医疗中心。', cost:40, level:2, population:4, gdp:100, width:2, height:2, family:'medical', tier:1, upgradeTo:'hospital' },
   { id:'farm', name:'向阳农场', category:'生产', description:'六格田畦与农舍，让四季在小镇生长。', cost:55, level:2, population:8, gdp:150, width:3, height:2, family:'farm', tier:1, upgradeTo:'largeFarm' },
   { id:'asphalt', name:'柏油马路', category:'交通', description:'汽车沿连通的柏油路、桥梁和隧道通行。', cost:5, level:2, population:0, gdp:1, width:1, height:1, transport:'road' },
   { id:'bridge', name:'公路桥梁', category:'交通', description:'逐格架在水面上，连接两岸道路供汽车通行。', cost:12, level:2, population:0, gdp:3, width:1, height:1, terrain:'water', transport:'road' },
+  { id:'bakery', name:'麦香面包房', category:'商业', description:'烤炉、橱窗与小露台，让街区飘起新鲜面包的香气。', cost:30, level:2, population:5, gdp:65, width:2, height:1 },
+  { id:'cafe', name:'林荫咖啡馆', category:'商业', description:'阳光露台与绿植围绕的小店，是邻里相聚的角落。', cost:35, level:2, population:4, gdp:75, width:2, height:2 },
   { id:'townhouse', name:'花园联排', category:'居住', description:'小屋扩建为带花园的联排住宅。', cost:40, level:3, population:36, gdp:55, width:2, height:1, family:'housing', tier:2, upgradeTo:'villa' },
   { id:'police', name:'小镇警局', category:'公共', description:'守护安静街道与每一个归家的人。', cost:50, level:3, population:6, gdp:120, width:2, height:2, family:'police', tier:1, upgradeTo:'policeCenter' },
   { id:'fire', name:'消防站', category:'公共', description:'明亮的红色屋顶，随时准备守护城市。', cost:55, level:3, population:6, gdp:120, width:2, height:2, family:'fire', tier:1, upgradeTo:'fireCenter' },
   { id:'harbor', name:'晴湾港口', category:'交通', description:'建在临水陆地上；连通水域里的两个港口会有轮船往返。', cost:70, level:3, population:12, gdp:260, width:2, height:2, terrain:'shore', transport:'harbor', family:'harbor', tier:1, upgradeTo:'seaport' },
   { id:'park', name:'城市公园', category:'景观', description:'散步道、花圃和树荫组成一整片绿色空间。', cost:30, level:3, population:0, gdp:40, width:3, height:2, family:'park', tier:2 },
   { id:'plaza', name:'市民广场', category:'景观', description:'为相遇、节日与音乐留出开阔空间。', cost:40, level:3, population:0, gdp:60, width:2, height:2 },
+  { id:'supermarket', name:'邻里小超市', category:'商业', description:'宽敞卖场与卸货区，供应街坊每日所需；可扩建为大型商场。', cost:60, level:3, population:8, gdp:150, width:2, height:2, family:'retail', tier:2, upgradeTo:'shoppingMall' },
+  { id:'restaurant', name:'暖灯餐厅', category:'商业', description:'餐厅、厨房与户外座位，为归家的人留一盏暖灯。', cost:55, level:3, population:6, gdp:130, width:2, height:2 },
+  { id:'postOffice', name:'小镇邮局', category:'公共', description:'红色邮筒与分拣窗口，把小镇的问候送往远方。', cost:50, level:3, population:6, gdp:115, width:2, height:2 },
   { id:'factory', name:'轻工业工厂', category:'生产', description:'车间与装卸区将小镇创意变成产品。', cost:100, level:4, population:35, gdp:520, width:3, height:2 },
   { id:'tunnel', name:'公路隧道', category:'交通', description:'逐格穿过山地，与两端道路连接后可通车。', cost:18, level:4, population:0, gdp:4, width:1, height:1, terrain:'mountain', transport:'road' },
   { id:'railway', name:'铁路', category:'交通', description:'连起两座火车站，让列车穿行于小镇之间。', cost:6, level:4, population:0, gdp:1, width:1, height:1, transport:'rail' },
@@ -30,10 +36,15 @@ export const CATALOG = Object.freeze([
   { id:'hospital', name:'综合医院', category:'公共', description:'住院楼、急诊区和绿地组成完整医疗院区。', cost:120, level:5, population:18, gdp:380, width:4, height:3, family:'medical', tier:2, upgradeTo:'medicalCenter' },
   { id:'largeFarm', name:'丰收大农场', category:'生产', description:'连片农田、温室与粮仓，拥有更大的收获。', cost:150, level:5, population:25, gdp:500, width:5, height:4, family:'farm', tier:2, upgradeTo:'agriculturalPark' },
   { id:'busStation', name:'公交总站', category:'交通', description:'带候车区的公交场站，让街区交通更完整。', cost:65, level:5, population:8, gdp:180, width:3, height:2 },
+  { id:'bank', name:'城市银行', category:'商业', description:'石柱门廊与服务大厅，为城市经营提供支持。', cost:85, level:5, population:10, gdp:270, width:2, height:2 },
+  { id:'cinema', name:'星幕电影院', category:'商业', description:'霓虹招牌、放映厅与等候广场，让夜晚多一个好去处。', cost:80, level:5, population:8, gdp:240, width:3, height:2 },
+  { id:'sportsCenter', name:'社区运动中心', category:'公共', description:'室内场馆和户外球场，给每个街区添一份活力。', cost:85, level:5, population:6, gdp:260, width:3, height:3 },
   { id:'residentialTower', name:'花园高层', category:'居住', description:'高层住宅与庭院让更多居民安居。', cost:140, level:6, population:160, gdp:220, width:3, height:3, family:'housing', tier:3 },
   { id:'villa', name:'湖畔别墅区', category:'居住', description:'成片花园与独立住宅，留住宁静生活。', cost:110, level:6, population:65, gdp:180, width:3, height:2, family:'housing', tier:3 },
   { id:'seaport', name:'远航海港', category:'交通', description:'更宽阔的码头和仓库，为轮船往返提供港湾。', cost:180, level:6, population:35, gdp:800, width:4, height:3, terrain:'shore', transport:'harbor', family:'harbor', tier:2, upgradeTo:'shippingHub' },
   { id:'solar', name:'向阳电站', category:'生产', description:'成片太阳能板，把日光留在城市里。', cost:120, level:6, population:5, gdp:400, width:4, height:3 },
+  { id:'shoppingMall', name:'城市大型商场', category:'商业', description:'多层购物中心、玻璃中庭与步行广场，汇聚城市生活。', cost:170, level:6, population:22, gdp:600, width:4, height:3, family:'retail', tier:3, upgradeTo:'grandMall' },
+  { id:'hotel', name:'花园酒店', category:'商业', description:'客房楼、迎宾车道与庭院，为远来的旅人留一处归宿。', cost:180, level:6, population:35, gdp:620, width:3, height:3 },
   { id:'metroLine', name:'地铁线路', category:'交通', description:'逐格铺设地下线路，连接两座地铁站后开通列车。当前需预留独立地块。', cost:9, level:7, population:0, gdp:2, width:1, height:1, terrain:'underground', transport:'metro' },
   { id:'metroStation', name:'地铁站', category:'交通', description:'两格站厅通往地下线路，连接另一站即可运行。', cost:110, level:7, population:8, gdp:260, width:2, height:1, transport:'metroStation' },
   { id:'museum', name:'城市博物馆', category:'公共', description:'记录小镇成长，让故事在展厅继续。', cost:130, level:7, population:8, gdp:420, width:3, height:3 },
@@ -44,6 +55,7 @@ export const CATALOG = Object.freeze([
   { id:'university', name:'星光大学', category:'公共', description:'教学楼、图书馆与大操场组成宽阔校园。', cost:320, level:9, population:65, gdp:1500, width:6, height:5, family:'school', tier:3 },
   { id:'medicalCenter', name:'区域医疗中心', category:'公共', description:'医疗、研究与急救组成大型院区。', cost:340, level:9, population:60, gdp:1550, width:6, height:4, family:'medical', tier:3 },
   { id:'stadium', name:'绿茵体育场', category:'公共', description:'完整球场与看台，让整座城市一起欢呼。', cost:260, level:9, population:15, gdp:900, width:6, height:4 },
+  { id:'grandMall', name:'都会商业中心', category:'商业', description:'大型购物楼群、玻璃穹顶和开放广场，组成完整商业街区。', cost:360, level:9, population:55, gdp:1600, width:6, height:4, family:'retail', tier:4 },
   { id:'agriculturalPark', name:'现代农业园', category:'生产', description:'大面积农田、温室和加工区共同生长。', cost:330, level:10, population:65, gdp:1600, width:7, height:5, family:'farm', tier:3 },
   { id:'shippingHub', name:'国际航运中心', category:'交通', description:'大型码头与集装箱场，连接水域里的其他港口。', cost:380, level:10, population:80, gdp:2100, width:6, height:4, terrain:'shore', transport:'harbor', family:'harbor', tier:3 },
   { id:'wind', name:'风能基地', category:'生产', description:'风机阵列将原野上的风化为城市动力。', cost:260, level:10, population:10, gdp:1150, width:5, height:4 },
@@ -67,6 +79,7 @@ export const LEVELS = Object.freeze([
 ].map(Object.freeze));
 
 const byId = new Map(CATALOG.map(item => [item.id, item]));
+const performanceModes = new Set(['balanced', 'eco', 'quality']);
 const MAX_POINTS = 1e9;
 const MAX_COORD = 1e7;
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -94,7 +107,7 @@ export function createInitialState(seed = Math.floor(Math.random() * 0xffffffff)
     focus: null,
     cityName: 'FocuCity',
     levelUnlocked: 1,
-    settings: { sound: false },
+    settings: { sound: false, performanceMode: 'balanced' },
   };
 }
 
@@ -367,6 +380,7 @@ export function validateSave(data) {
   state.cityName = cleanText(data.cityName, state.cityName, 24);
   state.points = safeInt(data.points, 0, MAX_POINTS) ? data.points : 0;
   state.settings.sound = data.settings?.sound === true;
+  state.settings.performanceMode = performanceModes.has(data.settings?.performanceMode) ? data.settings.performanceMode : 'balanced';
   state.checkins = normalizeCheckins(data.checkins);
   const occupied = new Set();
   for (const [key, value] of Object.entries(data.buildings).slice(0, 100000)) {
