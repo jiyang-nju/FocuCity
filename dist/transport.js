@@ -1,19 +1,28 @@
 // Pure, bounded route planning. Vehicles exist only when infrastructure connects.
 const DIRECTIONS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 const ROAD = new Set(['road', 'asphalt', 'bridge', 'tunnel']);
-const RAIL = new Set(['railway', 'railBridge', 'station']);
+const RAIL = new Set(['railway', 'railBridge']);
+const STATION = new Set(['station', 'grandStation']);
 const METRO = new Set(['metroLine', 'metroStation']);
 const PORT = new Set(['harbor', 'seaport', 'shippingHub']);
 const AIRPORT = new Set(['airport', 'internationalAirport']);
 const WATER = new Set(['water', 'river', 'lake', 'ocean']);
 const keyOf = (x, y) => `${x},${y}`;
-const pointOf = key => { const [x, y] = key.split(',').map(Number); return { x, y }; };
+const pointOf = key => { const [x, y] = key.split(':').at(-1).split(',').map(Number); return { x, y }; };
 
 export function buildingCells(key, building) {
   const { x, y } = pointOf(key), width = Math.max(1, building.width || 1), height = Math.max(1, building.height || 1);
   const cells = [];
   for (let dx = 0; dx < width; dx++) for (let dy = 0; dy < height; dy++) cells.push({ x: x + dx, y: y + dy });
   return cells;
+}
+
+// Trains stop on the exposed front platform, never through the station hall.
+export function stationTrackCells(key, building) {
+  const { x, y } = pointOf(key), w = Math.max(1, building.width || 1), h = Math.max(1, building.height || 1);
+  return building.rotation === 1
+    ? Array.from({ length: h }, (_, i) => ({ x: x + w - 1, y: y + i }))
+    : Array.from({ length: w }, (_, i) => ({ x: x + i, y: y + h - 1 }));
 }
 
 function bfs(starts, isAllowed, targets, maxNodes = 20000) {
@@ -233,18 +242,22 @@ export function buildTransportNetwork(buildings = {}, terrain = () => 'grass', o
   const roads = new Set(), rails = new Set(), metro = new Set(), stations = [], metros = [], ports = [], airports = [], occupied = new Map();
   for (const [key, building] of Object.entries(buildings)) {
     const cells = buildingCells(key, building), center = { x: cells.reduce((n, p) => n + p.x, 0) / cells.length, y: cells.reduce((n, p) => n + p.y, 0) / cells.length };
-    const terminal = { key, building, cells, center };
+    const terminal = { key, building, cells: STATION.has(building.type) ? stationTrackCells(key, building) : cells, center };
     for (const { x, y } of cells) {
-      const cellKey = keyOf(x, y); occupied.set(cellKey, building.type);
+      const cellKey = keyOf(x, y);
+      // Underground infrastructure cannot block shipping or replace a surface blocker.
+      if (building.type !== 'metroLine' && !['railway', 'railBridge'].includes(building.type)) occupied.set(cellKey, building.type);
       if (ROAD.has(building.type)) roads.add(cellKey);
       if (RAIL.has(building.type)) rails.add(cellKey);
       if (METRO.has(building.type)) metro.add(cellKey);
     }
-    if (building.type === 'station') stations.push(terminal);
+    if (STATION.has(building.type)) { stations.push(terminal); for (const p of terminal.cells) rails.add(keyOf(p.x, p.y)); }
     if (building.type === 'metroStation') metros.push(terminal);
     if (PORT.has(building.type)) ports.push(terminal);
     if (AIRPORT.has(building.type)) airports.push(terminal);
   }
+  // Corrupt/legacy overlapping tracks must not send trains through a real building.
+  for (const key of rails) if (occupied.has(key) && !ROAD.has(occupied.get(key)) && !STATION.has(occupied.get(key))) rails.delete(key);
   const routes = roadRoutes(roads);
   routes.push(...networkTerminalRoutes(stations, 'train', rails));
   routes.push(...networkTerminalRoutes(metros, 'metro', metro));

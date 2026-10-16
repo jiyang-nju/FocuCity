@@ -28,8 +28,8 @@ test('a new city has no subsidy and spending requires earned focus points', () =
   assert.equal(buildAt(state, 'cottage', 0, 0, 'grass').ok, true);
   assert.equal(state.points, 0);
   assert.equal(cityStats(state).population, 12);
-  assert.equal(demolishAt(state, 0, 0).refund, 7);
-  assert.equal(state.points, 7);
+  assert.equal(demolishAt(state, 0, 0).refund, 15);
+  assert.equal(state.points, 15);
   assert.equal(cityStats(state).population, 0);
   assert.equal(demolishAt(state, 0, 0).ok, false);
 });

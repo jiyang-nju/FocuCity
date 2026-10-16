@@ -1,41 +1,13 @@
 import { getFootprint, canBuildAt } from './model.js';
 import { buildTransportNetwork, sampleRoute, buildingCells } from './transport.js';
-import { drawTerrain, drawFacility, drawFacilityAnimation, drawPerson, drawVehicle, poly, shadow, diamond, ROAD_TYPES, RAIL_TYPES } from './visuals.js';
+import { drawTerrain, drawFacility, drawFacilityAnimation, drawPerson, drawVehicle, drawEasterEgg, poly, shadow, diamond, ROAD_TYPES, RAIL_TYPES } from './visuals.js';
 import { createRenderLoop, RENDER_MODES } from './render-loop.js';
 export { drawBuildingIcon } from './visuals.js';
 
+import { terrainAt, seedNumber } from './terrain.js';
+export { terrainAt } from './terrain.js';
+
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
-function seedNumber(seed) {
-  if (typeof seed === 'number') return seed | 0;
-  let h = 2166136261;
-  for (const c of String(seed || 'moss')) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return h | 0;
-}
-function rand(x, y, seed = 1) {
-  let h = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(seed | 0, 1442695041);
-  h = Math.imul(h ^ h >>> 13, 1274126177);
-  return ((h ^ h >>> 16) >>> 0) / 4294967295;
-}
-function noise(x, y, seed) {
-  const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-  const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
-  const a = rand(ix, iy, seed), b = rand(ix + 1, iy, seed), c = rand(ix, iy + 1, seed), d = rand(ix + 1, iy + 1, seed);
-  return (a + (b - a) * u) * (1 - v) + (c + (d - c) * u) * v;
-}
-export function terrainAt(x, y, seed = 1) {
-  const s = seedNumber(seed), radial = Math.hypot(x, y);
-  if (radial < 4.5) return 'grass';
-  const phase = (s % 1000) * .007;
-  const river = 8.5 + Math.sin(y * .14 + phase) * 2.5 + Math.sin(y * .049) * 4;
-  const lakeX = 12 + Math.sin(phase) * 2;
-  const lake = (x - lakeX) ** 2 / 24 + (y - 7) ** 2 / 31;
-  if (Math.abs(x - river) < 1.05 + noise(x * .2, y * .2, s + 8) * .65 || lake < 1) return 'water';
-  const hills = noise(x * .083, y * .083, s + 12);
-  if (radial > 10 && hills > .73 || radial > 19 && hills > .64) return 'mountain';
-  const trees = noise(x * .17, y * .17, s + 41);
-  if (radial > 4.9 && trees > .53 && rand(x, y, s + 72) > .12) return 'forest';
-  return 'grass';
-}
 
 export function createWorld(canvas,{getState,onTileClick,onHover,createCanvas,loopOptions}={}) {
   const c=canvas.getContext('2d',{alpha:false});
@@ -44,25 +16,28 @@ export function createWorld(canvas,{getState,onTileClick,onHover,createCanvas,lo
   const sceneContext=scene?.getContext('2d',{alpha:false}), overlayContext=overlay?.getContext('2d');
   let width=1,height=1,dpr=1,zoom=.95,panX=0,panY=0,tool=null,rotation=0,hover=null,keyboardCursor=null,down=null,dead=false,active=false,showMetro=false;
   let mode='balanced',sceneDirty=true,overlayDirty=true,networkDirty=true,lastBuildings=null;
-  let currentSeed=seedNumber(getState?.()?.seed),terrainCache=new Map(),signature='',occupancy=new Map(),routes=[],entries=[],waterTiles=[],animatedBuildings=[];
+  let currentSeed=seedNumber(getState?.()?.seed),terrainVersion=getState?.()?.terrainVersion===2?2:1,terrainCache=new Map(),signature='',occupancy=new Map(),routes=[],entries=[],waterTiles=[],animatedBuildings=[];
+  let previewCells=[],previewValid=true,demolitionLayer='surface',erasedKey='',occluders=[],spriteKey='';
+  let easterEgg=null;
   let visibleTraffic=false,network={routes:[],ports:[]},lastHover='',validationKey='',validation=null;
-  const stats={frames:0,sceneBuilds:0,overlayBuilds:0,networkBuilds:0};
+  const stats={frames:0,sceneBuilds:0,overlayBuilds:0,networkBuilds:0,occlusionComposites:0,lod:false};
   const loop=createRenderLoop(render,{fps:30,...loopOptions});
   canvas.style.touchAction='none';canvas.style.cursor='grab';
-  const terrain=(x,y)=>{const key=`${x},${y}`;let t=terrainCache.get(key);if(!t){t=terrainAt(x,y,currentSeed);terrainCache.set(key,t);}return t;};
+  const terrain=(x,y)=>{const key=`${x},${y}`;let t=terrainCache.get(key);if(!t){t=terrainAt(x,y,currentSeed,terrainVersion);terrainCache.set(key,t);}return t;};
   function invalidate(wholeScene=false){if(wholeScene)sceneDirty=true;overlayDirty=true;loop.invalidate();}
   function invalidateCity(){networkDirty=true;validationKey='';invalidate(true);}
-  function syncState(){const s=getState?.()||{};if(s.buildings!==lastBuildings||seedNumber(s.seed)!==currentSeed)invalidateCity();}
+  function syncState(){const s=getState?.()||{};if(s.buildings!==lastBuildings||seedNumber(s.seed)!==currentSeed||(s.terrainVersion===2?2:1)!==terrainVersion)invalidateCity();}
   function refreshNetwork(){
     if(!networkDirty)return;
     networkDirty=false;
     const state=getState?.()||{},buildings=state.buildings||{},seed=seedNumber(state.seed);
-    if(seed!==currentSeed){currentSeed=seed;terrainCache.clear();signature='';}
+    const nextVersion=state.terrainVersion===2?2:1;
+    if(seed!==currentSeed||nextVersion!==terrainVersion){currentSeed=seed;terrainVersion=nextVersion;terrainCache.clear();signature='';}
     lastBuildings=buildings;
-    const items=Object.entries(buildings),next=seed+'|'+items.map(([key,b])=>`${key}:${b.type}:${b.width||1}:${b.height||1}:${b.rotation||0}`).join('|');
+    const items=Object.entries(buildings),next=seed+':'+terrainVersion+'|'+items.map(([key,b])=>`${key}:${b.type}:${b.width||1}:${b.height||1}:${b.rotation||0}`).join('|');
     if(next===signature)return;
-    signature=next;entries=items.map(([key,building])=>{const [x,y]=key.split(',').map(Number);return {key,x,y,building};});
-    occupancy=new Map();for(const entry of entries)for(const p of buildingCells(entry.key,entry.building))occupancy.set(`${p.x},${p.y}`,entry);
+    signature=next;entries=items.map(([key,building])=>{const [x,y]=key.split(':').at(-1).split(',').map(Number),layer=building.type==='metroLine'?'underground':RAIL_TYPES.has(building.type)&&!['station','grandStation'].includes(building.type)?'rail':'surface';return {key,x,y,building,layer};});
+    occupancy=new Map();for(const entry of entries)for(const p of buildingCells(entry.key,entry.building)){const key=`${p.x},${p.y}`,cell=occupancy.get(key)||{surface:null,rail:null,underground:null};cell[entry.layer]=entry;const primary=cell.surface||cell.rail||cell.underground;occupancy.set(key,{...primary,surface:cell.surface,rail:cell.rail,underground:cell.underground});if(entry.layer!=='surface')occupancy.set(`${entry.layer}:${key}`,entry);}
     network=buildTransportNetwork(buildings,terrain);routes=network.routes;stats.networkBuilds++;
     sceneDirty=overlayDirty=true;validationKey='';
   }
@@ -77,11 +52,12 @@ export function createWorld(canvas,{getState,onTileClick,onHover,createCanvas,lo
   function worldPoint(px,py){const a=(px-width/2-panX)/zoom,b=(py-height/2-panY)/zoom;return {x:(b/16+a/32)/2,y:(b/16-a/32)/2};}
   function tilePoint(event){const r=canvas.getBoundingClientRect(),p=worldPoint(event.clientX-r.left,event.clientY-r.top);return {x:Math.floor(p.x+.5),y:Math.floor(p.y+.5)};}
   function screenTile(x,y){return {x:(x-y)*32,y:(x+y)*16};}
-  function tileInfo(pos){refreshNetwork();return {...pos,terrain:terrain(pos.x,pos.y),building:occupancy.get(`${pos.x},${pos.y}`)?.building||null};}
+  function tileInfo(pos){refreshNetwork();const cell=occupancy.get(`${pos.x},${pos.y}`),entry=tool==='demolish'?cell?.[demolitionLayer]:cell;return {...pos,terrain:terrain(pos.x,pos.y),building:entry?.building||null};}
   function emitHover(pos){hover=pos;const key=`${pos.x},${pos.y}`;if(key!==lastHover){lastHover=key;onHover?.(tileInfo(pos));invalidate();}}
-  function pointerDown(e){if(e.button!==0)return;keyboardCursor=null;canvas.focus({preventScroll:true});down={x:e.clientX,y:e.clientY,panX,panY,moved:false};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';invalidate();}
-  function pointerMove(e){keyboardCursor=null;if(down){const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>5)down.moved=true;if(down.moved){panX=down.panX+dx;panY=down.panY+dy;invalidate(true);}}emitHover(tilePoint(e));}
-  function pointerUp(e){if(!down)return;const moved=down.moved;down=null;canvas.style.cursor=tool?'crosshair':'grab';if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);if(!moved)onTileClick?.(tileInfo(tilePoint(e)));invalidate();}
+  function pointerDown(e){if(e.button!==0)return;keyboardCursor=null;canvas.focus({preventScroll:true});down={x:e.clientX,y:e.clientY,panX,panY,moved:false,erasing:tool==='demolish'};erasedKey='';if(down.erasing)eraseTile(tilePoint(e));canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';invalidate();}
+  function eraseTile(pos){const key=`${pos.x},${pos.y}`;if(key!==erasedKey){erasedKey=key;const info=tileInfo(pos);if(info.building)onTileClick?.(info);}}
+  function pointerMove(e){keyboardCursor=null;if(down?.erasing){eraseTile(tilePoint(e));emitHover(tilePoint(e));return;}if(down){const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>5)down.moved=true;if(down.moved){panX=down.panX+dx;panY=down.panY+dy;invalidate(true);}}emitHover(tilePoint(e));}
+  function pointerUp(e){if(!down)return;const moved=down.moved||down.erasing;down=null;canvas.style.cursor=tool?'crosshair':'grab';if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);if(!moved)onTileClick?.(tileInfo(tilePoint(e)));invalidate();}
   function pointerCancel(){down=null;canvas.style.cursor=tool?'crosshair':'grab';invalidate();}
   function pointerLeave(){if(!down&&!keyboardCursor){hover=null;lastHover='';onHover?.(null);invalidate();}}
   function keyDown(e){
@@ -100,7 +76,7 @@ export function createWorld(canvas,{getState,onTileClick,onHover,createCanvas,lo
     if(panX!==oldX||panY!==oldY)invalidate(true);
     if(e.key==='Enter'||e.key===' ')onTileClick?.(tileInfo(pos));
   }
-  function zoomTo(value,px=width/2,py=height/2){const old=zoom;zoom=clamp(value,.4,2.3);panX=px-width/2-(px-width/2-panX)*zoom/old;panY=py-height/2-(py-height/2-panY)*zoom/old;invalidate(true);}
+  function zoomTo(value,px=width/2,py=height/2){const old=zoom;zoom=clamp(value,.18,2.3);panX=px-width/2-(px-width/2-panX)*zoom/old;panY=py-height/2-(py-height/2-panY)*zoom/old;invalidate(true);}
   function wheel(e){e.preventDefault();const r=canvas.getBoundingClientRect();zoomTo(zoom*Math.exp(-e.deltaY*.001),e.clientX-r.left,e.clientY-r.top);}
   const listeners={pointerdown:pointerDown,pointermove:pointerMove,pointerup:pointerUp,pointercancel:pointerCancel,pointerleave:pointerLeave,wheel,keydown:keyDown};
   for(const [name,handler]of Object.entries(listeners))canvas.addEventListener(name,handler,name==='wheel'?{passive:false}:undefined);
@@ -114,40 +90,74 @@ export function createWorld(canvas,{getState,onTileClick,onHover,createCanvas,lo
     const minX=Math.floor(Math.min(...corners.map(p=>p.x)))-2,maxX=Math.ceil(Math.max(...corners.map(p=>p.x)))+2,minY=Math.floor(Math.min(...corners.map(p=>p.y)))-2,maxY=Math.ceil(Math.max(...corners.map(p=>p.y)))+2,tiles=[];
     for(let x=minX;x<=maxX;x++)for(let y=minY;y<=maxY;y++){
       const p=screenTile(x,y);if(!inView(p,150))continue;
-      const entry=occupancy.get(`${x},${y}`),ground=terrain(x,y);tiles.push({x,y,p,entry,ground});
+      const entry=occupancy.get(`${x},${y}`)?.surface||occupancy.get(`${x},${y}`)?.rail,ground=terrain(x,y);tiles.push({x,y,p,entry,ground});
     }
     tiles.sort((a,b)=>(a.x+a.y)-(b.x+b.y)||a.x-b.x);waterTiles=[];
-    for(const t of tiles){ctx.save();ctx.translate(t.p.x,t.p.y);drawTerrain(ctx,t.x,t.y,t.entry&&t.ground!=='water'?'grass':t.ground,currentSeed,0,terrain);ctx.restore();if(t.ground==='water'&&!t.entry&&(t.x+t.y)%3===0&&waterTiles.length<90)waterTiles.push(t);}
+    stats.lod=zoom<.42;
+    const terrainColors={grass:'#9bb784',forest:'#6f9269',mountain:'#a5aaa0',water:'#76b9bd',sand:'#d9c692',wetland:'#8cab88'};
+    for(const t of tiles){ctx.save();ctx.translate(t.p.x,t.p.y);const ground=t.entry&&t.ground!=='water'?'grass':t.ground;if(stats.lod)poly(ctx,diamond,terrainColors[ground]||terrainColors.grass);else drawTerrain(ctx,t.x,t.y,ground,currentSeed,0,terrain);ctx.restore();if(t.ground==='water'&&!t.entry&&(t.x+t.y)%3===0&&waterTiles.length<90)waterTiles.push(t);}
     const visible=entries.filter(entry=>{const w=entry.building.width||1,h=entry.building.height||1;return entry.x<=maxX&&entry.y<=maxY&&entry.x+w>=minX&&entry.y+h>=minY;});
-    const surface=id=>ROAD_TYPES.has(id)||RAIL_TYPES.has(id)||id==='metroLine';
-    visible.sort((a,b)=>surface(a.building.type)!==surface(b.building.type)?surface(a.building.type)?-1:1:a.x+a.y+(a.building.width||1)+(a.building.height||1)-b.x-b.y-(b.building.width||1)-(b.building.height||1));
-    animatedBuildings=[];
-    for(const entry of visible){const p=screenTile(entry.x,entry.y),options={x:entry.x,y:entry.y,width:entry.building.width||1,height:entry.building.height||1,rotation:entry.building.rotation||0,occupancy,showMetro,staticPass:true};ctx.save();ctx.translate(p.x,p.y);drawFacility(ctx,entry.building.type,0,options);ctx.restore();if(['wind','factory'].includes(entry.building.type))animatedBuildings.push({entry,p,options});}
+    const surface=id=>ROAD_TYPES.has(id)||['railway','railBridge','metroLine'].includes(id);
+    const layerOrder=entry=>entry.layer==='underground'?(showMetro?4:0):ROAD_TYPES.has(entry.building.type)?1:entry.layer==='rail'?2:3;
+    visible.sort((a,b)=>layerOrder(a)-layerOrder(b)||a.x+a.y+(a.building.width||1)+(a.building.height||1)-b.x-b.y-(b.building.width||1)-(b.building.height||1));
+    const nextSpriteKey=`${signature}:${zoom}:${dpr}:${showMetro}`,reusable=nextSpriteKey===spriteKey?new Map(occluders.map(o=>[o.entry.key,o])):new Map();
+    if(nextSpriteKey!==spriteKey)for(const cached of occluders)if(cached.canvas)cached.canvas.width=cached.canvas.height=1;
+    spriteKey=nextSpriteKey;animatedBuildings=[];occluders=[];
+    for(const entry of visible){
+      if(entry.layer==='underground'&&!showMetro)continue;
+      const p=screenTile(entry.x,entry.y),options={x:entry.x,y:entry.y,width:entry.building.width||1,height:entry.building.height||1,rotation:entry.building.rotation||0,occupancy,showMetro,staticPass:true,lod:stats.lod};
+      const sprite=!surface(entry.building.type)?reusable.get(entry.key)||makeFacilitySprite(entry,p,options):null;reusable.delete(entry.key);
+      if(sprite){ctx.drawImage(sprite.canvas,sprite.left,sprite.top,sprite.width,sprite.height);occluders.push(sprite);}
+      else{ctx.save();ctx.translate(p.x,p.y);drawFacility(ctx,entry.building.type,0,options);ctx.restore();}
+      if(!stats.lod&&['wind','factory','largeFactory'].includes(entry.building.type))animatedBuildings.push({entry,p,options});
+    }
+    for(const unused of reusable.values())unused.canvas.width=unused.canvas.height=1;
     ctx.restore();sceneDirty=false;overlayDirty=true;
   }
+  function makeFacilitySprite(entry,p,options){
+    const layer=makeLayer();if(!layer)return null;
+    const left=p.x-options.height*32-40,top=p.y-190,width=(options.width+options.height)*32+80,height=(options.width+options.height)*16+245;
+    const scale=Math.min(1.5,zoom*dpr),ctx=layer.getContext('2d');if(!ctx)return null;
+    layer.width=Math.ceil(width*scale);layer.height=Math.ceil(height*scale);
+    ctx.setTransform(scale,0,0,scale,0,0);ctx.translate(p.x-left,p.y-top);drawFacility(ctx,entry.building.type,0,options);
+    return {canvas:layer,entry,left,top,width,height,depth:entry.x+entry.y+options.width+options.height-2};
+  }
   function drawTraffic(time){
-    const speeds={car:1.5,walker:.32,boat:.75,train:2.2,metro:2.8,plane:3.4};
+    const speeds={car:1.5,walker:.32,boat:.75,train:2.2,metro:2.8,plane:3.4},traffic=[],planes=[];
     visibleTraffic=false;
+    const add=(kind,sample,id,style)=>{if(!sample)return;const p=screenTile(sample.x,sample.y);if(inView(p))traffic.push({kind,sample,p,id,style,depth:sample.x+sample.y});};
     for(let i=0;i<routes.length;i++){
       const route=routes[i];if(route.kind==='metro'&&!showMetro)continue;
-      // Distinct styles share a bounded route: more variety without all-pairs traffic.
       const styles=route.kind==='car'?['car','taxi','bus','coach','van']:route.kind==='boat'?(route.style==='cargo'?['cargo','liner']:route.style==='liner'?['liner','ferry']:['sailboat','ferry']):[route.style];
       const count=route.kind==='car'?Math.min(styles.length,Math.max(1,Math.floor((route.total||route.path.length)/5))):route.kind==='boat'&&route.total>8?2:1;
       for(let vehicle=0;vehicle<count;vehicle++){
         const offset=i*2.1+vehicle*(route.total||route.path.length)/Math.max(1,count),sample=sampleRoute(route,time/1000,speeds[route.kind],offset);if(!sample)continue;
-        const p=screenTile(sample.x,sample.y);if(!inView(p))continue;visibleTraffic=true;
-        if(route.kind==='car'&&occupancy.get(`${Math.round(sample.x)},${Math.round(sample.y)}`)?.building.type==='tunnel')continue;
-        if(route.kind==='walker'){drawPerson(c,p.x+5,p.y+2,i,time);continue;}
-        if(route.kind==='plane'){const altitude=Math.sin(sample.progress*Math.PI)*70;shadow(c,p.x+altitude*.3,p.y,16,5);drawVehicle(c,'plane',p.x,p.y-altitude,sample.direction,i,time,route.style);}
-        else if(route.kind==='train'||route.kind==='metro'){
-          for(let coach=2;coach>=0;coach--){const back=sampleRoute(route,time/1000-coach*.35,speeds[route.kind],offset),bp=screenTile(back.x,back.y);drawVehicle(c,route.kind,bp.x,bp.y-2,back.direction,i+coach,time,route.style);}
-        }else drawVehicle(c,route.kind,p.x,p.y,sample.direction,i+vehicle,time,styles[vehicle%styles.length]);
+        if(route.kind==='car'&&occupancy.get(`${Math.round(sample.x)},${Math.round(sample.y)}`)?.surface?.building.type==='tunnel')continue;
+        if(route.kind==='plane'){planes.push({sample,i,route});continue;}
+        if(route.kind==='train'||route.kind==='metro')for(let coach=2;coach>=0;coach--)add(route.kind,sampleRoute(route,time/1000-coach*.35,speeds[route.kind],offset),i+coach,route.style);
+        else add(route.kind,sample,i+vehicle,styles[vehicle%styles.length]);
       }
     }
+    traffic.sort((a,b)=>a.depth-b.depth);
+    for(const vehicle of traffic){
+      visibleTraffic=true;const {kind,sample,p,id,style}=vehicle;
+      if(kind==='walker')drawPerson(c,p.x+5,p.y+2,id,time);
+      else drawVehicle(c,kind,p.x,p.y-(['train','metro'].includes(kind)?2:0),sample.direction,id,time,style);
+      // Restore only foreground building pixels intersecting this vehicle. Each
+      // building is a cached bitmap; detailed geometry is never rebuilt per frame.
+      if(kind!=='metro'){
+        const box={left:p.x-75,top:p.y-100,right:p.x+75,bottom:p.y+35};
+        const onPlatform=o=>{if(kind!=='train'||!['station','grandStation'].includes(o.entry.building.type))return false;const b=o.entry.building,dx=sample.x-o.entry.x,dy=sample.y-o.entry.y;return b.rotation===1?Math.abs(dx-(b.width||1)+1)<.45&&dy>=-1&&dy<=(b.height||1):Math.abs(dy-(b.height||1)+1)<.45&&dx>=-1&&dx<=(b.width||1);};
+        const front=occluders.filter(o=>!onPlatform(o)&&o.depth>vehicle.depth+.15&&o.left<box.right&&o.left+o.width>box.left&&o.top<box.bottom&&o.top+o.height>box.top);
+        if(front.length){c.save();c.beginPath();c.rect(box.left,box.top,box.right-box.left,box.bottom-box.top);c.clip();for(const o of front){c.drawImage(o.canvas,o.left,o.top,o.width,o.height);stats.occlusionComposites++;}c.restore();}
+      }
+    }
+    for(const {sample,i,route}of planes){const p=screenTile(sample.x,sample.y);if(!inView(p))continue;visibleTraffic=true;const altitude=Math.sin(sample.progress*Math.PI)*70;shadow(c,p.x+altitude*.3,p.y,16,5);drawVehicle(c,'plane',p.x,p.y-altitude,sample.direction,i,time,route.style);}
   }
   function drawHover(ctx,state){
+    if(previewCells.length){for(const cell of previewCells){const p=screenTile(cell.x,cell.y);ctx.save();ctx.translate(p.x,p.y);poly(ctx,diamond,previewValid?'rgba(176,225,145,.48)':'rgba(204,86,73,.42)',previewValid?'#e3f4c7':'#ffbaa4',1.5);ctx.restore();}return;}
     if(!hover||down)return;
-    const existing=occupancy.get(`${hover.x},${hover.y}`),demolition=tool==='demolish';
+    const demolition=tool==='demolish',cell=occupancy.get(`${hover.x},${hover.y}`),existing=demolition?cell?.[demolitionLayer]:cell;
     let cells=existing?getFootprint(existing.building,existing.x,existing.y):[{x:hover.x,y:hover.y}],invalid=false;
     if(tool&&!demolition){
       cells=getFootprint(tool,hover.x,hover.y,rotation);const key=`${hover.x},${hover.y}:${tool}:${rotation}:${state.points}:${signature}`;
@@ -167,16 +177,21 @@ export function createWorld(canvas,{getState,onTileClick,onHover,createCanvas,lo
       for(const t of waterTiles){const shift=Math.sin(time*.0012+t.x*.5+t.y)*2;c.moveTo(t.p.x-6+shift,t.p.y+2);c.lineTo(t.p.x+3+shift,t.p.y+2);}c.stroke();
     }
     for(const item of animatedBuildings){c.save();c.translate(item.p.x,item.p.y);drawFacilityAnimation(c,item.entry.building.type,time,item.options);c.restore();}
-    drawTraffic(time);c.restore();
+    drawTraffic(time);
+    if(easterEgg){if(time>=easterEgg.until)easterEgg=null;else{const p=screenTile(easterEgg.point.x,easterEgg.point.y);c.save();c.translate(p.x,p.y);drawEasterEgg(c,easterEgg.kind,time);c.restore();}}
+    c.restore();
     if(overlayContext){if(overlayDirty){stats.overlayBuilds++;overlayContext.setTransform(dpr,0,0,dpr,0,0);overlayContext.clearRect(0,0,width,height);overlayContext.save();camera(overlayContext);drawHover(overlayContext,getState?.()||{});overlayContext.restore();overlayDirty=false;}c.setTransform(1,0,0,1,0,0);c.drawImage(overlay,0,0);}
     else{c.save();camera(c);drawHover(c,getState?.()||{});c.restore();}
     // Offscreen traffic may enter view later; keep its low-rate simulation alive.
-    return routes.some(r=>r.kind!=='metro'||showMetro)||animatedBuildings.length>0||(mode!=='eco'&&waterTiles.length>0);
+    return !!easterEgg||routes.some(r=>r.kind!=='metro'||showMetro)||animatedBuildings.length>0||(mode!=='eco'&&waterTiles.length>0);
   }
   function setPerformanceMode(value){const next=RENDER_MODES[value]?value:'balanced';if(mode===next)return;mode=next;loop.setFps(RENDER_MODES[mode].fps);resize();invalidate(true);}
   setPerformanceMode(getState?.()?.settings?.performanceMode);
   return {
     invalidateCity,syncState,invalidateOverlay(){invalidate();},
+    showEasterEgg(kind,point){if(!['cat','duck','fireflies'].includes(kind))return;easterEgg={kind,point:point||worldPoint(width/2,height/2),until:(loopOptions?.now?.()??performance.now())+6000};loop.invalidate();},
+    setPreviewCells(cells,valid=true){previewCells=Array.isArray(cells)?cells:[];previewValid=!!valid;invalidate();},
+    setDemolitionLayer(layer){demolitionLayer=['surface','rail','underground'].includes(layer)?layer:'surface';invalidate();},
     setTool(id){tool=id||null;validationKey='';canvas.style.cursor=tool?'crosshair':'grab';invalidate();},
     setRotation(value){rotation=value===1?1:0;validationKey='';invalidate();},
     setActive(value){active=!!value;if(active&&!dead){syncState();resize();}loop.setActive(active&&!dead);},
@@ -188,6 +203,6 @@ export function createWorld(canvas,{getState,onTileClick,onHover,createCanvas,lo
     getPortStatus(key){refreshNetwork();return network.ports.find(p=>p.key===key)||null;},
     getTrafficSummary(){refreshNetwork();const summary={cars:0,walkers:0,boats:0,trains:0,metros:0,planes:0},keys={car:'cars',walker:'walkers',boat:'boats',train:'trains',metro:'metros',plane:'planes'};for(const route of routes)summary[keys[route.kind]]++;return summary;},
     getRenderStats(){return {...stats,mode,fpsLimit:RENDER_MODES[mode].fps,dpr,visibleTraffic};},
-    destroy(){dead=true;loop.destroy();ro.disconnect();for(const [name,handler]of Object.entries(listeners))canvas.removeEventListener(name,handler);for(const layer of [scene,overlay])if(layer){layer.width=layer.height=1;}},
+    destroy(){dead=true;loop.destroy();ro.disconnect();for(const [name,handler]of Object.entries(listeners))canvas.removeEventListener(name,handler);for(const layer of [scene,overlay,...occluders.map(o=>o.canvas)])if(layer){layer.width=layer.height=1;}},
   };
 }

@@ -26,11 +26,11 @@ export const CATALOG = Object.freeze([
   { id:'supermarket', name:'邻里小超市', category:'商业', description:'宽敞卖场与卸货区，供应街坊每日所需；可扩建为大型商场。', cost:60, level:3, population:8, gdp:150, width:2, height:2, family:'retail', tier:2, upgradeTo:'shoppingMall' },
   { id:'restaurant', name:'暖灯餐厅', category:'商业', description:'餐厅、厨房与户外座位，为归家的人留一盏暖灯。', cost:55, level:3, population:6, gdp:130, width:2, height:2 },
   { id:'postOffice', name:'小镇邮局', category:'公共', description:'红色邮筒与分拣窗口，把小镇的问候送往远方。', cost:50, level:3, population:6, gdp:115, width:2, height:2 },
-  { id:'factory', name:'轻工业工厂', category:'生产', description:'车间与装卸区将小镇创意变成产品。', cost:100, level:4, population:35, gdp:520, width:3, height:2 },
+  { id:'factory', name:'轻工业工厂', category:'生产', description:'车间与装卸区将小镇创意变成产品。', cost:100, level:4, population:35, gdp:520, width:3, height:2, family:'industry', tier:1, upgradeTo:'largeFactory' },
   { id:'tunnel', name:'公路隧道', category:'交通', description:'逐格穿过山地，与两端道路连接后可通车。', cost:18, level:4, population:0, gdp:4, width:1, height:1, terrain:'mountain', transport:'road' },
   { id:'railway', name:'铁路', category:'交通', description:'连起两座火车站，让列车穿行于小镇之间。', cost:6, level:4, population:0, gdp:1, width:1, height:1, transport:'rail' },
   { id:'railBridge', name:'铁路桥', category:'交通', description:'架在水面上的铁路，为火车跨越江河。', cost:15, level:4, population:0, gdp:3, width:1, height:1, terrain:'water', transport:'rail' },
-  { id:'station', name:'火车站', category:'交通', description:'站房与站台占六格，连接铁路后可与另一站通车。', cost:90, level:4, population:12, gdp:210, width:3, height:2, transport:'station' },
+  { id:'station', name:'火车站', category:'交通', description:'站房与站台占六格，连接铁路后可与另一站通车。', cost:90, level:4, population:12, gdp:210, width:3, height:2, transport:'station', family:'station', tier:1, upgradeTo:'grandStation' },
   { id:'library', name:'城市图书馆', category:'公共', description:'在书页与阳光之间，积累一座城市的知识。', cost:60, level:4, population:4, gdp:170, width:2, height:2 },
   { id:'highschool', name:'绿茵中学', category:'公共', description:'扩建教学楼与操场，为少年留下奔跑的空间。', cost:100, level:5, population:12, gdp:310, width:4, height:3, family:'school', tier:2, upgradeTo:'university' },
   { id:'hospital', name:'综合医院', category:'公共', description:'住院楼、急诊区和绿地组成完整医疗院区。', cost:120, level:5, population:18, gdp:380, width:4, height:3, family:'medical', tier:2, upgradeTo:'medicalCenter' },
@@ -45,11 +45,13 @@ export const CATALOG = Object.freeze([
   { id:'solar', name:'向阳电站', category:'生产', description:'成片太阳能板，把日光留在城市里。', cost:120, level:6, population:5, gdp:400, width:4, height:3 },
   { id:'shoppingMall', name:'城市大型商场', category:'商业', description:'多层购物中心、玻璃中庭与步行广场，汇聚城市生活。', cost:170, level:6, population:22, gdp:600, width:4, height:3, family:'retail', tier:3, upgradeTo:'grandMall' },
   { id:'hotel', name:'花园酒店', category:'商业', description:'客房楼、迎宾车道与庭院，为远来的旅人留一处归宿。', cost:180, level:6, population:35, gdp:620, width:3, height:3 },
-  { id:'metroLine', name:'地铁线路', category:'交通', description:'逐格铺设地下线路，连接两座地铁站后开通列车。当前需预留独立地块。', cost:9, level:7, population:0, gdp:2, width:1, height:1, terrain:'underground', transport:'metro' },
+  { id:'metroLine', name:'地铁线路', category:'交通', description:'逐格铺设地下线路，连接两座地铁站后开通列车。地面仍可建造其他设施。', cost:9, level:7, population:0, gdp:2, width:1, height:1, terrain:'underground', transport:'metro' },
   { id:'metroStation', name:'地铁站', category:'交通', description:'两格站厅通往地下线路，连接另一站即可运行。', cost:110, level:7, population:8, gdp:260, width:2, height:1, transport:'metroStation' },
   { id:'museum', name:'城市博物馆', category:'公共', description:'记录小镇成长，让故事在展厅继续。', cost:130, level:7, population:8, gdp:420, width:3, height:3 },
   { id:'office', name:'商务中心', category:'生产', description:'办公楼群聚集新想法与城市活力。', cost:160, level:7, population:35, gdp:720, width:3, height:3 },
   { id:'airport', name:'云端机场', category:'交通', description:'跑道、航站楼与停机坪占32格；两座机场之间会有飞机往返。', cost:180, level:8, population:20, gdp:1200, width:8, height:4, transport:'airport', family:'airport', tier:1, upgradeTo:'internationalAirport' },
+  { id:'largeFactory', name:'大型工业工厂', category:'生产', description:'大型生产车间、仓储、管线和装卸场组成24格工业园。', cost:300, level:8, population:90, gdp:1800, width:6, height:4, family:'industry', tier:2 },
+  { id:'grandStation', name:'中央火车站', category:'交通', description:'24格站房、多组站台与候车大厅，连接铁路开行城际列车。', cost:280, level:8, population:35, gdp:950, width:6, height:4, transport:'station', family:'station', tier:2 },
   { id:'fireCenter', name:'城市消防中心', category:'公共', description:'扩建车库与训练场，守护不断成长的城市。', cost:170, level:8, population:20, gdp:450, width:4, height:3, family:'fire', tier:2 },
   { id:'policeCenter', name:'城市警务中心', category:'公共', description:'警务楼与训练场，为都会提供完整服务。', cost:160, level:8, population:20, gdp:430, width:4, height:3, family:'police', tier:2 },
   { id:'university', name:'星光大学', category:'公共', description:'教学楼、图书馆与大操场组成宽阔校园。', cost:320, level:9, population:65, gdp:1500, width:6, height:5, family:'school', tier:3 },
@@ -98,7 +100,8 @@ const makeId = () => globalThis.crypto?.randomUUID?.() || `${Date.now().toString
 
 export function createInitialState(seed = Math.floor(Math.random() * 0xffffffff)) {
   return {
-    version: 2,
+    version: 3,
+    terrainVersion: 2,
     seed: safeInt(seed, 0, 0xffffffff) ? seed : 20261012,
     points: 0,
     buildings: {},
@@ -107,6 +110,7 @@ export function createInitialState(seed = Math.floor(Math.random() * 0xffffffff)
     focus: null,
     cityName: 'FocuCity',
     levelUnlocked: 1,
+    progress: { claimedLevels: [1], achievements: [], secrets: [] },
     settings: { sound: false, performanceMode: 'balanced' },
   };
 }
@@ -242,7 +246,7 @@ function terrainName(terrain) {
 }
 
 const waterTypes = new Set(['water', 'river', 'lake', 'ocean']);
-const landTypes = new Set(['grass', 'forest']);
+const landTypes = new Set(['grass', 'forest', 'sand', 'wetland']);
 const rotationValue = rotation => rotation === 1 ? 1 : 0;
 
 /** Stored dimensions are already rotated; old saves without dimensions occupy one cell. */
@@ -261,17 +265,51 @@ export function getFootprint(typeOrBuilding, x, y, rotation = 0) {
   return Array.from({ length: width * height }, (_, index) => ({ x: x + index % width, y: y + Math.floor(index / width) }));
 }
 
-export function getBuildingAt(state, x, y) {
-  if (!coordinatesValid(x, y)) return null;
+export function parseBuildingKey(key) {
+  if (typeof key !== 'string' || !/^(?:(?:rail|underground):)?-?\d+,-?\d+$/.test(key)) return null;
+  const [x, y] = key.replace(/^(?:rail|underground):/, '').split(',').map(Number);
+  return coordinatesValid(x, y) ? { x, y } : null;
+}
+
+export function getBuildingLayer(typeOrBuilding) {
+  const type = typeof typeOrBuilding === 'string' ? typeOrBuilding : typeOrBuilding?.type;
+  if (type === 'metroLine') return 'underground';
+  return type === 'railway' || type === 'railBridge' ? 'rail' : 'surface';
+}
+
+function buildingKey(type, x, y) {
+  const layer = getBuildingLayer(type);
+  return `${layer === 'surface' ? '' : `${layer}:`}${x},${y}`;
+}
+
+export function getBuildingsAt(state, x, y) {
+  if (!coordinatesValid(x, y)) return [];
+  const matches = [];
   for (const [key, building] of Object.entries(state.buildings || {})) {
     const definition = byId.get(building?.type);
-    if (!definition) continue;
-    const [bx, by] = key.split(',').map(Number);
+    const anchor = parseBuildingKey(key);
+    if (!definition || !anchor) continue;
     const width = safeInt(building.width, 1, 16) ? building.width : 1;
     const height = safeInt(building.height, 1, 16) ? building.height : 1;
-    if (x >= bx && x < bx + width && y >= by && y < by + height) return { key, x: bx, y: by, building, definition };
+    if (x >= anchor.x && x < anchor.x + width && y >= anchor.y && y < anchor.y + height) {
+      matches.push({ key, x: anchor.x, y: anchor.y, building, definition, layer: getBuildingLayer(building) });
+    }
   }
-  return null;
+  const order = { surface: 0, rail: 1, underground: 2 };
+  return matches.sort((a, b) => order[a.layer] - order[b.layer]);
+}
+
+export function getBuildingAt(state, x, y, layer) {
+  return getBuildingsAt(state, x, y).find(found => !layer || found.layer === layer) || null;
+}
+
+const crossingRoads = new Set(['road', 'asphalt', 'bridge']);
+function layersConflict(first, second) {
+  const firstLayer = getBuildingLayer(first), secondLayer = getBuildingLayer(second);
+  if (firstLayer === secondLayer) return true;
+  if (firstLayer === 'underground' || secondLayer === 'underground') return false;
+  const surface = firstLayer === 'surface' ? first : second;
+  return !crossingRoads.has(typeof surface === 'string' ? surface : surface.type);
 }
 
 // The original UI passed the anchor terrain and a neighbour callback. Accept
@@ -291,8 +329,8 @@ function placementCheck(state, definition, x, y, terrainAt, rotation, ignoreKey 
   if (footprint.some(cell => !coordinatesValid(cell.x, cell.y))) return { ok: false, message: '设施超出了可建设范围。' };
   if (definition.level > cityStats(state).level) return { ok: false, message: `城市达到 Lv.${definition.level} 后解锁${definition.name}。` };
   for (const cell of footprint) {
-    const occupied = getBuildingAt(state, cell.x, cell.y);
-    if (occupied && occupied.key !== ignoreKey) return { ok: false, message: '设施范围内已有建筑，请预留完整地块。' };
+    const blocked = getBuildingsAt(state, cell.x, cell.y).some(occupied => occupied.key !== ignoreKey && layersConflict(definition.id, occupied.building));
+    if (blocked) return { ok: false, message: '设施范围内已有建筑；仅道路与铁路可交叉，地下线路可与地面设施重叠。' };
   }
   if (typeof terrainAt !== 'function') return { ok: false, message: '无法读取地形，请重试。' };
   const grounds = footprint.map(cell => terrainName(terrainAt(cell.x, cell.y)));
@@ -303,7 +341,7 @@ function placementCheck(state, definition, x, y, terrainAt, rotation, ignoreKey 
   } else if (definition.terrain === 'underground') {
     if (!grounds.every(ground => landTypes.has(ground) || waterTypes.has(ground) || ground === 'mountain')) return { ok: false, message: '这片地形无法铺设地铁线路。' };
   } else {
-    if (!grounds.every(ground => landTypes.has(ground))) return { ok: false, message: `需要一整片 ${rotation ? definition.height : definition.width} × ${rotation ? definition.width : definition.height} 的草地或森林。` };
+    if (!grounds.every(ground => landTypes.has(ground))) return { ok: false, message: `需要一整片 ${rotation ? definition.height : definition.width} × ${rotation ? definition.width : definition.height} 的平坦陆地（草地、森林、沙地或湿地）。` };
     if (definition.terrain === 'shore') {
       const occupiedCells = new Set(footprint.map(cell => `${cell.x},${cell.y}`));
       const nearWater = footprint.some(cell => [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => !occupiedCells.has(`${cell.x + dx},${cell.y + dy}`) && waterTypes.has(terrainName(terrainAt(cell.x + dx, cell.y + dy)))));
@@ -330,14 +368,49 @@ export function buildAt(state, id, x, y, terrain, rotationOrNeighbor = 0, legacy
   const result = canBuildAt(state, id, x, y, terrain, rotationOrNeighbor, legacyRotation);
   if (!result.ok) return result;
   state.points -= result.cost;
-  state.buildings[`${x},${y}`] = storedBuilding(result.definition, result.rotation);
+  state.buildings[buildingKey(id, x, y)] = storedBuilding(result.definition, result.rotation);
   const previousLevel = state.levelUnlocked || 1;
   state.levelUnlocked = Math.max(previousLevel, levelByMetrics(state.buildings));
   return { ok: true, message: `${result.definition.name}建好了！`, levelUp: state.levelUnlocked > previousLevel, level: state.levelUnlocked, cost: result.cost };
 }
 
-export function canUpgradeBuilding(state, x, y, terrainAt) {
-  const existing = getBuildingAt(state, x, y);
+const linearTypes = new Set(['road', 'asphalt', 'bridge', 'tunnel', 'railway', 'railBridge', 'metroLine']);
+
+/** A preview never mutates the city; the complete line is validated before paying. */
+export function planLinearBuild(state, id, start, end, terrain, rotation = 0) {
+  const failure = message => ({ ok: false, message, count: 0, cost: 0, cells: [] });
+  if (!linearTypes.has(id)) return failure('批量建设适用于道路、桥梁、隧道、铁路与地铁线路。');
+  if (!start || !end || !coordinatesValid(start.x, start.y) || !coordinatesValid(end.x, end.y)) return failure('请选择有效的起点与终点。');
+  if (start.x !== end.x && start.y !== end.y) return failure('起点和终点需要位于同一横行或纵列。');
+  const length = Math.abs(end.x - start.x) + Math.abs(end.y - start.y) + 1;
+  if (length > 200) return failure('每次最多建设 200 格，请分段铺设。');
+  const definition = byId.get(id), cells = [];
+  const dx = Math.sign(end.x - start.x), dy = Math.sign(end.y - start.y);
+  let skipped = 0;
+  for (let index = 0; index < length; index++) {
+    const x = start.x + dx * index, y = start.y + dy * index;
+    if (getBuildingAt(state, x, y, getBuildingLayer(id))?.building.type === id) { skipped++; continue; }
+    const result = placementCheck(state, definition, x, y, terrain, rotationValue(rotation));
+    if (!result.ok) return failure(`坐标 ${x},${y}：${result.message}`);
+    cells.push({ x, y });
+  }
+  const cost = cells.length * definition.cost;
+  if (!finite(state.points) || state.points < cost) return failure(`整条线路需要 ${cost} 专注点，还差 ${Math.max(0, cost - (state.points || 0))} 点。`);
+  return { ok: true, definition, rotation: rotationValue(rotation), cost, count: cells.length, cells, skipped, message: cells.length ? `建设 ${cells.length} 格${definition.name}，共 ${cost} 专注点${skipped ? `，跳过 ${skipped} 格已有线路` : ''}。` : '这段线路已经全部建好，无需花费专注点。', levelUp: false };
+}
+
+export function buildLinear(state, id, start, end, terrain, rotation = 0) {
+  const plan = planLinearBuild(state, id, start, end, terrain, rotation);
+  if (!plan.ok) return plan;
+  const previousLevel = cityStats(state).level;
+  state.points -= plan.cost;
+  for (const { x, y } of plan.cells) state.buildings[buildingKey(id, x, y)] = storedBuilding(plan.definition, plan.rotation);
+  state.levelUnlocked = Math.max(previousLevel, levelByMetrics(state.buildings));
+  return { ...plan, levelUp: state.levelUnlocked > previousLevel, level: state.levelUnlocked, message: plan.count ? `已建成 ${plan.count} 格${plan.definition.name}，花费 ${plan.cost} 专注点。` : plan.message };
+}
+
+export function canUpgradeBuilding(state, x, y, terrainAt, layer) {
+  const existing = getBuildingAt(state, x, y, layer);
   if (!existing) return { ok: false, message: '这里没有可以升级的设施。' };
   const definition = byId.get(existing.definition.upgradeTo);
   if (!definition) return { ok: false, message: '这项设施已经达到最高等级。' };
@@ -350,8 +423,8 @@ export function canUpgradeBuilding(state, x, y, terrainAt) {
   return { ...result, existing, cost, message: `扩建为${definition.name}需要 ${cost} 专注点。` };
 }
 
-export function upgradeBuilding(state, x, y, terrainAt) {
-  const result = canUpgradeBuilding(state, x, y, terrainAt);
+export function upgradeBuilding(state, x, y, terrainAt, layer) {
+  const result = canUpgradeBuilding(state, x, y, terrainAt, layer);
   if (!result.ok) return result;
   state.points -= result.cost;
   state.buildings[result.existing.key] = storedBuilding(result.definition, result.rotation);
@@ -360,33 +433,132 @@ export function upgradeBuilding(state, x, y, terrainAt) {
   return { ok: true, message: `已扩建为${result.definition.name}！`, cost: result.cost, levelUp: state.levelUnlocked > previousLevel, level: state.levelUnlocked };
 }
 
-export function demolishAt(state, x, y) {
+export function demolishAt(state, x, y, layer) {
   if (!coordinatesValid(x, y)) return { ok: false, message: '请选择有效的地块。', refund: 0 };
-  const existing = getBuildingAt(state, x, y);
+  const existing = getBuildingAt(state, x, y, layer);
   if (!existing) return { ok: false, message: '这里没有可以拆除的设施。', refund: 0 };
-  state.levelUnlocked = cityStats(state).level;
   const paid = safeInt(existing.building.paid, 0, existing.definition.cost) ? existing.building.paid : existing.definition.cost;
-  const refund = Math.floor(paid / 2);
+  const refund = paid;
+  if (state.points + refund > MAX_POINTS) return { ok: false, message: '全额返还会超出专注点存储上限，请先使用一些专注点。', refund: 0 };
+  state.levelUnlocked = cityStats(state).level;
   delete state.buildings[existing.key];
-  state.points = Math.min(MAX_POINTS, state.points + refund);
+  state.points += refund;
   return { ok: true, message: `已拆除${existing.definition.name}，返还 ${refund} 专注点。`, refund };
 }
 
+export const ACHIEVEMENTS = Object.freeze([
+  { id: 'first-focus', title: '第一束专注', description: '完成 1 次专注。', points: 10, target: 1, metric: 'sessions' },
+  { id: 'focus-hour', title: '一小时的力量', description: '累计专注 60 分钟。', points: 20, target: 60, metric: 'minutes' },
+  { id: 'focus-ten-hours', title: '时光建筑师', description: '累计专注 600 分钟。', points: 75, target: 600, metric: 'minutes' },
+  { id: 'first-home', title: '亮起第一扇窗', description: '拥有 1 座住宅。', points: 10, target: 1, metric: 'homes' },
+  { id: 'diverse-city', title: '丰富的街区', description: '同时拥有 10 种不同设施。', points: 40, target: 10, metric: 'variety' },
+  { id: 'neighbors', title: '五百位邻居', description: '城市人口达到 500 人。', points: 100, target: 500, metric: 'population' },
+  { id: 'road-builder', title: '路向远方', description: '同时拥有 30 格道路、桥梁或公路隧道。', points: 35, target: 30, metric: 'roads' },
+  { id: 'rail-builder', title: '铁轨的节奏', description: '同时拥有 20 格铁路或铁路桥。', points: 50, target: 20, metric: 'rails' },
+  { id: 'waterfront', title: '向着港湾', description: '同时拥有 2 座港口设施；连通水域后可开航。', points: 50, target: 2, metric: 'ports' },
+  { id: 'green-city', title: '把绿色留给城市', description: '同时拥有 5 座花间庭院或城市公园。', points: 25, target: 5, metric: 'parks' },
+  { id: 'checkin-five', title: '小小坚持', description: '累计在 5 个不同日期签到。', points: 30, target: 5, metric: 'checkins' },
+  { id: 'checkin-twenty', title: '长久的约定', description: '累计在 20 个不同日期签到。', points: 100, target: 20, metric: 'checkins' },
+].map(Object.freeze));
+
+export const SECRETS = Object.freeze([
+  { id: 'evening', title: '晚风的来信', description: '第一次点亮暮色，远方的窗户也在为你的专注亮灯。', points: 5 },
+  { id: 'forest', title: '林间小邻居', description: '树丛里探出一只好奇的小猫，陪你在林间歇一会儿。', points: 8 },
+  { id: 'shore', title: '漂流瓶', description: '水面漂来一封信：每一座伟大的城市，都从片刻专注开始。', points: 8 },
+  { id: 'explorer', title: '地平线之外', description: '你抵达了距原点八十格之外，发现这座世界还有许多故事。', points: 12 },
+].map(Object.freeze));
+
+function normalizeProgress(raw) {
+  const record = isRecord(raw) ? raw : {};
+  const knownAchievements = new Set(ACHIEVEMENTS.map(item => item.id));
+  const knownSecrets = new Set(SECRETS.map(item => item.id));
+  return {
+    claimedLevels: [...new Set([1, ...(Array.isArray(record.claimedLevels) ? record.claimedLevels.filter(level => safeInt(level, 1, LEVELS.length)) : [])])].sort((a, b) => a - b),
+    achievements: [...new Set(Array.isArray(record.achievements) ? record.achievements.filter(id => knownAchievements.has(id)) : [])],
+    secrets: [...new Set(Array.isArray(record.secrets) ? record.secrets.filter(id => knownSecrets.has(id)) : [])],
+  };
+}
+
+export function getAchievementProgress(state) {
+  const buildings = Object.values(state.buildings || {}).map(item => byId.get(item?.type)).filter(Boolean);
+  const sessions = Array.isArray(state.sessions) ? state.sessions : [];
+  const progress = normalizeProgress(state.progress);
+  const today = localDateKey();
+  const values = {
+    sessions: sessions.length,
+    minutes: sessions.reduce((sum, item) => sum + (safeInt(item.minutes, 1, 240) ? item.minutes : 0), 0),
+    homes: buildings.filter(item => item.category === '居住').length,
+    variety: new Set(buildings.map(item => item.id)).size,
+    population: metrics(state.buildings).population,
+    roads: buildings.filter(item => item.transport === 'road').length,
+    rails: buildings.filter(item => item.transport === 'rail').length,
+    ports: buildings.filter(item => item.transport === 'harbor').length,
+    parks: buildings.filter(item => item.id === 'garden' || item.id === 'park').length,
+    checkins: normalizeCheckins(state.checkins).days.filter(day => day <= today).length,
+  };
+  return ACHIEVEMENTS.map(item => {
+    const current = values[item.metric] || 0;
+    const claimed = progress.achievements.includes(item.id);
+    return { ...item, current, claimed, completed: claimed || current >= item.target };
+  });
+}
+
+/** One-shot markers make full-refund demolition and rebuilding safe from reward loops. */
+export function levelReward(level) {
+  return safeInt(level, 2, LEVELS.length) ? 20 + level * 10 : 0;
+}
+
+export function collectProgressRewards(state) {
+  state.progress = normalizeProgress(state.progress);
+  state.levelUnlocked = cityStats(state).level;
+  const events = [];
+  for (const milestone of LEVELS) {
+    if (milestone.level > state.levelUnlocked || state.progress.claimedLevels.includes(milestone.level)) continue;
+    const points = levelReward(milestone.level);
+    if (state.points + points > MAX_POINTS) continue;
+    state.progress.claimedLevels.push(milestone.level);
+    state.points += points;
+    const unlocks = CATALOG.filter(item => item.level === milestone.level).map(({ id, name, description, width, height }) => ({ id, name, description, width, height }));
+    events.push({ kind: 'level', id: `level-${milestone.level}`, title: `Lv.${milestone.level} · ${milestone.title}`, description: `城市迈入新阶段，解锁 ${unlocks.length} 项设施。`, points, level: milestone.level, unlocks });
+  }
+  for (const achievement of getAchievementProgress(state)) {
+    if (!achievement.completed || achievement.claimed || state.points + achievement.points > MAX_POINTS) continue;
+    state.progress.achievements.push(achievement.id);
+    state.points += achievement.points;
+    const { id, title, description, points } = achievement;
+    events.push({ kind: 'achievement', id, title, description, points });
+  }
+  return events;
+}
+
+export function discoverSecret(state, id) {
+  const secret = SECRETS.find(item => item.id === id);
+  if (!secret) return { ok: false, message: '这里还没有新的故事。' };
+  const progress = normalizeProgress(state.progress);
+  if (progress.secrets.includes(id)) return { ok: false, message: '这段小镇故事已经收集。' };
+  if (state.points + secret.points > MAX_POINTS) return { ok: false, message: '专注点已接近存储上限，使用一些后再探索。' };
+  progress.secrets.push(id);
+  state.progress = progress;
+  state.points += secret.points;
+  return { ok: true, message: secret.description, event: { kind: 'secret', ...secret } };
+}
+
 export function validateSave(data) {
-  if (!isRecord(data) || ![1, 2].includes(data.version) || !isRecord(data.buildings) || !Array.isArray(data.sessions)) {
+  if (!isRecord(data) || ![1, 2, 3].includes(data.version) || !isRecord(data.buildings) || !Array.isArray(data.sessions)) {
     return { ok: false, message: '这不是有效的 FocuCity 存档，或存档版本不受支持。' };
   }
   const state = createInitialState(data.seed);
+  state.terrainVersion = data.version < 3 ? 1 : data.terrainVersion === 1 ? 1 : 2;
   state.cityName = cleanText(data.cityName, state.cityName, 24);
   state.points = safeInt(data.points, 0, MAX_POINTS) ? data.points : 0;
   state.settings.sound = data.settings?.sound === true;
   state.settings.performanceMode = performanceModes.has(data.settings?.performanceMode) ? data.settings.performanceMode : 'balanced';
   state.checkins = normalizeCheckins(data.checkins);
-  const occupied = new Set();
+  const occupied = new Map();
   for (const [key, value] of Object.entries(data.buildings).slice(0, 100000)) {
-    if (!/^-?\d+,-?\d+$/.test(key) || !isRecord(value) || !byId.has(value.type)) continue;
-    const [x, y] = key.split(',').map(Number);
-    if (!coordinatesValid(x, y)) continue;
+    const anchor = parseBuildingKey(key);
+    if (!anchor || !isRecord(value) || !byId.has(value.type)) continue;
+    const { x, y } = anchor;
     const definition = byId.get(value.type);
     const rotation = rotationValue(value.rotation);
     // v1 towns keep their original compact lots, even for now-larger facilities.
@@ -396,9 +568,12 @@ export function validateSave(data) {
     if (!legacy && (value.width !== expectedWidth || value.height !== expectedHeight)) continue;
     const building = { type: value.type, width: legacy ? 1 : expectedWidth, height: legacy ? 1 : expectedHeight, rotation, paid: safeInt(value.paid, 0, definition.cost) ? value.paid : definition.cost };
     const footprint = getFootprint(building, x, y);
-    if (footprint.some(cell => !coordinatesValid(cell.x, cell.y) || occupied.has(`${cell.x},${cell.y}`))) continue;
-    state.buildings[`${x},${y}`] = building;
-    for (const cell of footprint) occupied.add(`${cell.x},${cell.y}`);
+    if (footprint.some(cell => !coordinatesValid(cell.x, cell.y) || (occupied.get(`${cell.x},${cell.y}`) || []).some(type => layersConflict(type, building)))) continue;
+    state.buildings[buildingKey(building, x, y)] = building;
+    for (const cell of footprint) {
+      const cellKey = `${cell.x},${cell.y}`;
+      occupied.set(cellKey, [...(occupied.get(cellKey) || []), building.type]);
+    }
   }
   const knownIds = new Set();
   for (const session of data.sessions.slice(0, 100000)) {
@@ -425,6 +600,8 @@ export function validateSave(data) {
   // The original top level unlocked airports; preserve that earned unlock.
   const compatibleLevel = data.version === 1 && savedLevel === 5 ? 8 : savedLevel;
   state.levelUnlocked = Math.max(compatibleLevel, levelByMetrics(state.buildings));
+  state.progress = normalizeProgress(data.progress);
+  if (data.version < 3) state.progress.claimedLevels = LEVELS.filter(item => item.level <= state.levelUnlocked).map(item => item.level);
   return { ok: true, state, message: '城市存档已准备好。' };
 }
 

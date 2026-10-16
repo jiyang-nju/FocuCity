@@ -5,8 +5,8 @@ import { CATALOG, LEVELS, createInitialState, getFootprint, getBuildingAt, canBu
 const grass = () => 'grass';
 function sandbox() { const state = createInitialState(1); state.points = 10000; state.levelUnlocked = 12; return state; }
 
-test('catalog provides 57 dimensioned facilities across twelve levels and valid expansion chains', () => {
-  assert.equal(CATALOG.length, 57);
+test('catalog provides 59 dimensioned facilities across twelve levels and valid expansion chains', () => {
+  assert.equal(CATALOG.length, 59);
   assert.equal(LEVELS.length, 12);
   const ids = new Set(CATALOG.map(item => item.id));
   assert.equal(ids.size, CATALOG.length);
@@ -33,7 +33,7 @@ test('multi-cell lots charge once, block every occupied cell, and demolish from 
   assert.equal(canBuildAt(state, 'road', 3, 4, grass).ok, false);
   assert.equal(buildAt(state, 'farm', 1, 2, grass).ok, false);
   assert.equal(state.points, 9965);
-  assert.equal(demolishAt(state, 3, 4).refund, 17);
+  assert.equal(demolishAt(state, 3, 4).refund, 35);
   assert.deepEqual(state.buildings, {});
 });
 
@@ -51,7 +51,7 @@ test('rotation changes the whole footprint and terrain checks every cell before 
   assert.equal(getBuildingAt(state, 2, 1), null);
 });
 
-test('bridges require water, tunnels require mountains, and underground rail reserves its cell', () => {
+test('bridges require water, tunnels require mountains, and underground rail shares its cell with the surface', () => {
   const state = sandbox();
   assert.equal(buildAt(state, 'bridge', 0, 0, grass).ok, false);
   assert.equal(buildAt(state, 'bridge', 0, 0, () => 'river').ok, true);
@@ -59,7 +59,7 @@ test('bridges require water, tunnels require mountains, and underground rail res
   assert.equal(buildAt(state, 'tunnel', 2, 0, grass).ok, false);
   assert.equal(buildAt(state, 'tunnel', 2, 0, () => 'mountain').ok, true);
   assert.equal(buildAt(state, 'metroLine', 3, 0, () => 'water').ok, true);
-  assert.equal(buildAt(state, 'bridge', 3, 0, () => 'water').ok, false);
+  assert.equal(buildAt(state, 'bridge', 3, 0, () => 'water').ok, true);
 });
 
 test('harbors need a land footprint with water outside any edge', () => {
@@ -80,7 +80,7 @@ test('facility upgrades retain their anchor, charge only the cost difference, an
   assert.equal(state.buildings['10,10'].type, 'highschool');
   assert.equal(getBuildingAt(state, 13, 12).key, '10,10');
   assert.equal(state.buildings['10,10'].paid, 100);
-  assert.equal(demolishAt(state, 13, 12).refund, 50);
+  assert.equal(demolishAt(state, 13, 12).refund, 100);
 });
 
 test('expansion is atomic when its extra cells, terrain, funds, or unlock are unavailable', () => {
@@ -105,14 +105,14 @@ test('v1 saves retain compact legacy buildings, original points, timers, and cit
     buildings:{'0,0':{type:'airport'},'1,0':{type:'harbor'},'2,0':{type:'school'}} };
   delete legacy.checkins;
   const state = validateSave(legacy).state;
-  assert.equal(state.version, 2);
+  assert.equal(state.version, 3);
   assert.equal(state.points, 130);
   assert.equal(state.cityName, '我的旧城');
   assert.equal(state.levelUnlocked, 8);
   assert.equal(Object.keys(state.buildings).length, 3);
   assert.equal(state.buildings['0,0'].width, 1);
   assert.equal(state.buildings['0,0'].height, 1);
-  assert.equal(demolishAt(state, 0, 0).refund, 90);
+  assert.equal(demolishAt(state, 0, 0).refund, 180);
   assert.deepEqual(state.checkins, {days:[],weeks:[],months:[]});
 });
 

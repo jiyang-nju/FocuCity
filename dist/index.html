@@ -37,6 +37,7 @@
 <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-3v14M9 9l12-3"/><ellipse cx="5.5" cy="18" rx="3.5" ry="3"/><ellipse cx="17.5" cy="16" rx="3.5" ry="3"/></symbol>
 <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M6 19a5 5 0 0 1-1-10 7 7 0 0 1 13-2 6 6 0 0 1 0 12Z"/></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+<symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="m8 14-2 8 6-3 6 3-2-8m-6-5 1.3 1.4L15 7"/></symbol>
 </defs></svg>
 <aside class="sidebar" aria-label="主导航">
   <a class="brand-mark" href="#home" aria-label="FocuCity 主页"><img src="./favicon.svg" alt="FocuCity 城市时钟标志" width="45" height="45"></a>
@@ -47,6 +48,7 @@
     <button class="nav-button" data-nav="catalog"><svg class="icon"><use href="#i-book"/></svg><span>城市图鉴</span></button>
     <button class="nav-button" data-nav="checkin"><svg class="icon"><use href="#i-check"/></svg><span>每日签到</span></button>
     <button class="nav-button" data-nav="levels"><svg class="icon"><use href="#i-people"/></svg><span>城市成长</span></button>
+    <button class="nav-button" data-nav="achievements"><svg class="icon"><use href="#i-medal"/></svg><span>城市成就</span></button>
   </div>
   <div class="sidebar-bottom">
     <button class="nav-button" data-nav="help"><svg class="icon"><use href="#i-help"/></svg><span>小镇指南</span></button>
@@ -93,7 +95,8 @@
           <button class="secondary-button build-toggle" id="toggleBuild" aria-expanded="false" aria-controls="buildDock"><svg class="icon"><use href="#i-hammer"/></svg> 建设小镇 <span>＋</span></button>
           <div class="network-status" id="networkStatus">连接道路与车站，让小镇流动起来</div>
           <button class="map-layer-button" id="metroLayer" aria-pressed="false">地铁图层</button>
-          <div class="placement-status" id="placementStatus" hidden></div><div class="placement-actions" id="placementActions" hidden><button id="rotatePlacement" class="secondary-button">旋转方向</button><button id="cancelPlacement" class="secondary-button">取消建造</button></div>
+          <div class="quick-tools" aria-label="地图快捷工具"><button id="quickDemolish" aria-pressed="false" title="连续拆除（X），全额返还专注点"><svg class="icon"><use href="#i-trash"/></svg><span>快速拆除</span></button><label id="demolitionLayerControl" hidden>拆除层<select id="demolitionLayer" aria-label="拆除图层"><option value="surface">地面建筑／道路</option><option value="rail">铁路</option><option value="underground">地下线路</option></select></label></div>
+          <div class="placement-status" id="placementStatus" hidden></div><div class="placement-actions" id="placementActions" hidden><button id="rotatePlacement" class="secondary-button">旋转方向</button><button id="batchPlacement" class="secondary-button" aria-pressed="false" hidden>批量直线</button><button id="cancelPlacement" class="secondary-button">取消工具</button></div>
         </div>
         <section class="build-panel card" id="buildDock" aria-label="设施建造栏" hidden>
           <div class="build-heading"><div class="build-title"><svg class="icon"><use href="#i-hammer"/></svg><h2>建设小镇</h2></div><div class="build-actions"><button class="text-button" id="openCatalog">查看图鉴 →</button><button class="icon-button" id="closeBuild" aria-label="收起建设工具"><svg class="icon"><use href="#i-close"/></svg></button></div></div>

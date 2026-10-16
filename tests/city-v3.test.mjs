@@ -25,7 +25,7 @@ test('a rotated convenience store grows through the retail chain without chargin
   assert.equal(canUpgradeBuilding(state, -3, 5, grass).ok, false);
   const restored = validateSave(JSON.parse(JSON.stringify(state))).state;
   assert.deepEqual(restored.buildings, state.buildings);
-  assert.equal(demolishAt(restored, 0, 10).refund, 180);
+  assert.equal(demolishAt(restored, 0, 10).refund, 360);
   assert.equal(Object.keys(restored.buildings).length, 0);
 });
 
@@ -56,7 +56,7 @@ test('new businesses and public amenities survive save validation alongside the 
   assert.equal(result.state.points, state.points);
   const legacy = validateSave({ ...createInitialState(42), version: 1, buildings: { '0,0': { type: 'shop' } } }).state;
   assert.equal(legacy.buildings['0,0'].type, 'shop');
-  assert.equal(demolishAt(legacy, 0, 0).refund, 12);
+  assert.equal(demolishAt(legacy, 0, 0).refund, 25);
 });
 
 test('performance settings persist and missing or unsupported values use balanced mode', () => {

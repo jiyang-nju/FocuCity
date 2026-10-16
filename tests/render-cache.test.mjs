@@ -7,7 +7,7 @@ import { drawFacility, drawFacilityAnimation, drawVehicle } from '../dist/visual
 function drawingContext() {
   let depth=0,calls=0;
   const context={globalAlpha:1};
-  for(const name of ['beginPath','moveTo','lineTo','closePath','fill','stroke','fillRect','clearRect','ellipse','translate','scale','rotate','transform','setTransform','setLineDash','drawImage','fillText'])context[name]=(...args)=>{
+  for(const name of ['rect','clip','beginPath','moveTo','lineTo','closePath','fill','stroke','fillRect','clearRect','ellipse','translate','scale','rotate','transform','setTransform','setLineDash','drawImage','fillText'])context[name]=(...args)=>{
     calls++;
     for(const arg of args)if(typeof arg==='number')assert.ok(Number.isFinite(arg),`${name} received an invalid coordinate`);
     if(name==='ellipse')assert.ok(args[2]>=0&&args[3]>=0);
@@ -57,10 +57,29 @@ test('animated traffic reuses static terrain and buildings; edits and camera cha
     world.getTrafficSummary();world.getTrafficSummary();assert.equal(world.getRenderStats().networkBuilds,2,'reading route counts must not replan');
     world.setPerformanceMode('eco');for(let i=0;i<3;i++)step();
     assert.equal(canvas.width,900);assert.equal(world.getRenderStats().fpsLimit,20);
+    state.buildings={
+      '-5,-1':{type:'station',width:3,height:2},'5,-1':{type:'station',width:3,height:2},
+      '0,1':{type:'residentialTower',width:3,height:3},
+      ...Object.fromEntries(Array.from({length:7},(_,i)=>[`rail:${i-2},0`,{type:'railway',width:1,height:1}])),
+    };
+    world.invalidateCity();const priorComposites=world.getRenderStats().occlusionComposites;
+    for(let i=0;i<80;i++)step();
+    assert.equal(world.getTrafficSummary().trains,1);
+    assert.ok(world.getRenderStats().occlusionComposites>priorComposites,'foreground building pixels cover passing trains');
+    const cachedTrainScene=world.getRenderStats().sceneBuilds;
+    for(let i=0;i<20;i++)step();assert.equal(world.getRenderStats().sceneBuilds,cachedTrainScene,'occlusion does not rebuild the terrain');
     world.setActive(false);const paused=world.getRenderStats().frames;for(let i=0;i<10;i++)step();
     assert.equal(jobs.size,0);assert.equal(world.getRenderStats().frames,paused);
     state.buildings={'0,0':{type:'cottage'}};world.setActive(true);for(let i=0;i<3;i++)step();
     assert.equal(world.getTrafficSummary().cars,0,'replaced/imported buildings invalidate old routes');
+    world.setZoom(.18);for(let i=0;i<3;i++)step();
+    assert.equal(world.getRenderStats().lod,true,'far zoom uses simpler terrain');
+    assert.equal(jobs.size,0,'an eco city without vehicles sleeps');
+    const sceneBeforeSecret=world.getRenderStats().sceneBuilds;
+    world.showEasterEgg('cat',{x:0,y:0});for(let i=0;i<10;i++)step();
+    assert.ok(jobs.size>0,'a discovered animal temporarily wakes the map');
+    assert.equal(world.getRenderStats().sceneBuilds,sceneBeforeSecret,'animal animation reuses the scene');
+    for(let i=0;i<160;i++)step();assert.equal(jobs.size,0,'the map sleeps after the short discovery animation');
     world.destroy();assert.equal(jobs.size,0);assert.equal(listeners.size,0);
     assert.ok(contexts.every(ctx=>ctx.depth===0));
   }finally{world?.destroy();for(const[k,v]of saved)if(v)Object.defineProperty(globalThis,k,v);else delete globalThis[k];}

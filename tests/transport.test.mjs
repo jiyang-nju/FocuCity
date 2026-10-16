@@ -15,16 +15,16 @@ test('connected streets produce cars and walkers; demolition of their link remov
 });
 
 test('rail traffic needs two stations and an uninterrupted rail connection', () => {
-  const city = { '0,0': { type: 'station', width: 2, height: 2 }, '2,0': cell('railway'), '3,0': cell('railBridge'), '4,0': cell('station') };
+  const city = { '0,0': { type: 'station', width: 2, height: 2 }, '2,1': cell('railway'), '3,1': cell('railBridge'), '4,1': cell('station') };
   const train = filter(city, 'train');
   assert.equal(train.length, 1);
   assert.ok(train[0].path.some(p => p.x === 3));
-  delete city['3,0'];
+  delete city['3,1'];
   assert.equal(filter(city, 'train').length, 0);
-  city['3,0'] = cell('road');
+  city['3,1'] = cell('road');
   assert.equal(filter(city, 'train').length, 0, 'roads cannot replace railway tracks');
-  city['3,0'] = cell('railway');
-  delete city['4,0'];
+  city['3,1'] = cell('railway');
+  delete city['4,1'];
   assert.equal(filter(city, 'train').length, 0, 'a single station has no fake loop');
 });
 
@@ -212,4 +212,42 @@ test('long-route sampling uses cached distances and does not revisit every waypo
   for (let t = 0; t < 100; t++) assert.equal(sampleRoute(route, t + .5).x, t + .5);
   assert.ok(reads <= 300, `only the sampled segment should be read, saw ${reads} waypoint reads`);
   assert.equal(sampleRoute(route, 30002).x, 10000 - .5);
+});
+
+test('prefixed rail and underground networks coexist with streets and buildings', () => {
+  const city = {'-1,0':cell('station'),'3,0':cell('grandStation'),'0,0':cell('asphalt'),'1,0':cell('asphalt'),'2,0':cell('asphalt'),
+    'rail:0,0':cell('railway'),'rail:1,0':cell('railway'),'rail:2,0':cell('railway'),
+    '-1,2':cell('metroStation'),'3,2':cell('metroStation'),'0,2':cell('cottage'),'1,2':cell('convenienceStore'),
+    'underground:0,2':cell('metroLine'),'underground:1,2':cell('metroLine'),'underground:2,2':cell('metroLine')};
+  const routes=buildTransportRoutes(city);
+  assert.equal(routes.filter(r=>r.kind==='car').length,1);
+  assert.equal(routes.filter(r=>r.kind==='train').length,1);
+  assert.equal(routes.filter(r=>r.kind==='metro').length,1);
+  assert.ok(routes.every(r=>r.path.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))));
+});
+
+test('grand stations and rotated stations route trains along exposed platforms, avoiding halls', () => {
+  const city={'0,0':{type:'grandStation',width:6,height:4},'10,3':{type:'station',width:2,height:2}};
+  for(let x=6;x<=9;x++)city[`rail:${x},3`]=cell('railway');
+  city['rail:9,4']=cell('railway');
+  const [route]=filter(city,'train');assert.ok(route);
+  assert.ok(route.path.filter(p=>p.x<6).every(p=>p.y===3));
+  assert.ok(route.path.filter(p=>p.x>=10).every(p=>p.y===4));
+  const rotated={'0,0':{type:'grandStation',width:4,height:6,rotation:1},'3,9':cell('station')};
+  for(let y=6;y<9;y++)rotated[`rail:3,${y}`]=cell('railway');
+  const [rotatedRoute]=filter(rotated,'train');assert.ok(rotatedRoute);
+  assert.ok(rotatedRoute.path.every(p=>p.x===3));
+});
+
+test('an overlapping underground tile cannot hide a surface waterway obstruction', () => {
+  const city={'0,0':cell('harbor'),'4,0':cell('harbor'),'2,1':cell('cottage'),'underground:2,1':cell('metroLine')};
+  const river=(x,y)=>y===1&&x>=0&&x<=4?'water':'grass';
+  assert.equal(filter(city,'boat',river).length,0);
+  delete city['2,1'];assert.equal(filter(city,'boat',river).length,1);
+  city['2,1']=cell('bridge');city['rail:2,1']=cell('railBridge');assert.equal(filter(city,'boat',river).length,1);
+});
+
+test('invalid legacy tracks beneath buildings do not produce trains through houses', () => {
+  const city={'-1,0':cell('station'),'1,0':cell('station'),'0,0':cell('cottage'),'rail:0,0':cell('railway')};
+  assert.equal(filter(city,'train').length,0);
 });

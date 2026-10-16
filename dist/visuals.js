@@ -188,12 +188,28 @@ function drawBuilding(c, type, time = 0, options = {}) {
 export function drawTerrain(c, x, y, type, seed, time, getTerrain) {
   const r = rand(x,y,seed), v = noise(x*.18,y*.18,seed+17);
   if (type === 'water') {
-    const color = ['#7faeb1','#85b4b5','#8bb9b8'][Math.floor(v*2.99)];
+    // Open lake water is deeper blue; narrow rivers keep a soft turquoise bed.
+    const waterAround = [[1,0],[-1,0],[0,1],[0,-1],[2,0],[-2,0],[0,2],[0,-2]].filter(([dx,dy])=>getTerrain(x+dx,y+dy)==='water').length;
+    const color = (waterAround>6?['#78a7b0','#7eafb6','#85b4ba']:['#87b6b4','#8bbcb7','#94c2ba'])[Math.floor(v*2.99)];
     poly(c,diamond,color,'rgba(87,139,139,.11)',.5);
     const edges = [[0,-1,[[0,-16],[32,0]]],[1,0,[[32,0],[0,16]]],[0,1,[[0,16],[-32,0]]],[-1,0,[[-32,0],[0,-16]]]];
     for(const [dx,dy,p] of edges) if(getTerrain(x+dx,y+dy)!=='water') { line(c,p,'#b9c29a',3); line(c,p,'#d0ceb0',1); }
     if(r>.38) { const wiggle = Math.sin(time*.0012 + r*20)*2; line(c,[[-11+wiggle,-3],[2+wiggle,-3]],'#abd0c6',1.2); line(c,[[3-wiggle,6],[11-wiggle,6]],'#a5c8c1',1); }
     if(r>.92) { poly(c,[[-9,2],[-5,-1],[0,1],[-1,4],[-7,5]],'#729c7e'); rect(c,-5,0,2,2,'#e2c4bc'); }
+    return;
+  }
+  if(type==='sand') {
+    poly(c,diamond,['#d8c99f','#dfd0aa','#d4c59c'][Math.floor(v*2.99)]);
+    for(let n=0;n<3;n++)line(c,[[-15+n*9,-2+n*3],[-9+n*9,-3+n*3]],'#c4b58d',.65);
+    if(r>.73){poly(c,[[-5,4],[-7,1],[-4,-2],[0,0],[0,3]],'#eee0c0');line(c,[[-5,3],[-4,-1]],'#c7b89c',.6);}
+    if(r<.16){flower(c,-8,1,'#d6bf83');flower(c,-5,3,'#dfca95');}
+    return;
+  }
+  if(type==='wetland') {
+    poly(c,diamond,['#98b69a','#a3bca0','#8eae92'][Math.floor(v*2.99)]);
+    poly(c,[[-18,0],[-7,-5],[12,-3],[20,3],[7,8],[-9,6]],'#8db6ac');
+    for(let n=0;n<4;n++){const xx=-15+n*9,yy=(n%2)*6-1;line(c,[[xx,yy],[xx-1,yy-10],[xx-4,yy-14]],'#6d906b',1);line(c,[[xx,yy],[xx+3,yy-8]],'#829968',1);rect(c,xx-2,yy-12,2,5,'#a39264');}
+    if(r>.85){poly(c,[[3,5],[8,2],[13,4],[9,7]],'#82a676');rect(c,8,2,2,2,'#ddc1ba');}
     return;
   }
   const index = Math.min(4,Math.floor(v*5));
@@ -213,6 +229,7 @@ export function drawTerrain(c, x, y, type, seed, time, getTerrain) {
   } else if (type==='forest') {
     tree(c, r>.5 ? -5 : 3, 2, 11+r*4, r>.68, r<.14);
     if(r>.76) tree(c,15,4,7,true);
+    if(r<.12)for(let n=0;n<3;n++){rect(c,7+n*4,3+n%2,1,4,'#e5d6b1');poly(c,[[5+n*4,4+n%2],[8+n*4,n%2],[11+n*4,4+n%2]],'#b67d66');rect(c,8+n*4,2+n%2,1,1,'#f1dfba');}
   } else {
     if(r>.89 && Math.hypot(x,y)>4) tree(c,-3,1,10,r>.97);
     else if(r>.67) { flower(c,-11+r*18,-3,r>.8?'#e9d7a5':'#dba8a0'); if(r>.78)flower(c,9,4,'#e1dcb6'); }
@@ -225,6 +242,20 @@ export function drawPerson(c,x,y,seed,time) {
   const hop = Math.sin(time*.009+seed)*.45;
   rect(c,-1,-7+hop,3,3,'#e9c69b'); rect(c,-1,-4+hop,3,5,['#d38a71','#668c91','#c9b16f','#aaa18b'][Math.abs(seed)%4]);
   rect(c,-1,1,1,2,'#626c61'); rect(c,1,1,1,2,'#626c61'); rect(c,-1,-8+hop,3,1,'#72735b'); c.restore();
+}
+// Small discoveries can be reused by the world without maintaining sprite assets.
+export function drawEasterEgg(c,kind='cat',time=0){
+  if(kind==='cat'){
+    shadow(c,1,2,5,2);poly(c,[[-4,1],[-4,-3],[-1,-5],[3,-4],[5,-1],[4,2]],'#d3ac78');
+    poly(c,[[-5,-3],[-5,-7],[-2,-5],[0,-7],[1,-3]],'#b98b64');
+    line(c,[[3,1],[7,1],[8,-2]],'#ba8d64',2);line(c,[[-4,-3],[-2,-3]],'#655e4d',.7);
+  }else if(kind==='duck'){
+    shadow(c,0,3,6,2);poly(c,[[-7,0],[-3,-4],[4,-3],[6,1],[2,4],[-4,3]],'#f0dfb4');
+    rect(c,4,-7,5,6,'#71958b');poly(c,[[9,-5],[13,-3],[9,-2]],'#dab377');rect(c,7,-6,1,1,'#59675b');
+    line(c,[[-9,4],[-3,6],[6,5]],'#c6d9bc',1);
+  }else if(kind==='fireflies'){
+    for(let n=0;n<5;n++){const xx=-16+n*7,yy=-6-Math.sin(n*1.7+time*.001)*5;rect(c,xx,yy,2,2,'#e8dea0');}
+  }
 }
 export function drawBoat(c,x,y,time,seed) {
   c.save();c.translate(x,y+Math.sin(time*.001+seed)*1.1);
@@ -305,34 +336,58 @@ function drawRetail(c,type,width,height) {
     }else {for(let i=0;i<3;i++){box(c,-10+i*8,5+i*2,5,5,4,'#a7b47c','#bca77d','#9f8e68');rect(c,-12+i*8,i*2-1,3,2,i%2?'#d79a6c':'#b8c47e');}}
   });
   atCell(c,maxX,maxY,()=>{planter(c,13,8);lamp(c,20,2);});
-  if(type==='convenienceStore'){wallSign(c,23,-22,14,'OPEN',theme,'right');line(c,[[23,-22],[23,0]],'#8d957e',1.5);}
+  if(type==='convenienceStore'){wallSign(c,23,-22,14,'OPEN',theme,'right');line(c,[[23,-22],[23,0]],'#8d957e',1.5);c.save();c.translate(8,8);drawEasterEgg(c,'cat');c.restore();}
   if(type==='supermarket')atCell(c,maxX,0,()=>{box(c,12,6,8,6,7,'#adc6b8','#8fa8a0','#748e88');line(c,[[5,-1],[2,-5]],'#d4d5ba',1);});
 }
 function drawNetwork(c, type, x, y, occupancy = new Map(), showMetro = true) {
   const rail = RAIL_TYPES.has(type), metro = type === 'metroLine';
   const bridge = type === 'bridge' || type === 'railBridge', tunnel = type === 'tunnel';
-  const connected = (dx,dy) => {
-    const next = occupancy.get(`${x+dx},${y+dy}`)?.building?.type;
-    return rail ? RAIL_TYPES.has(next)||next==='station' : metro ? METRO_TYPES.has(next) : ROAD_TYPES.has(next)||next==='busStation';
+  const typesAt=(xx,yy)=>{
+    const base=occupancy.get(`${xx},${yy}`);
+    const entries=[base,base?.surface,base?.rail,base?.underground,occupancy.get(`rail:${xx},${yy}`),occupancy.get(`underground:${xx},${yy}`)];
+    return entries.map(entry=>entry?.building?.type||entry?.type).filter(Boolean);
   };
-  const dirs = [[1,0],[0,1],[-1,0],[0,-1]].filter(([dx,dy])=>connected(dx,dy));
+  const connected = (dx,dy) => {
+    return typesAt(x+dx,y+dy).some(next=>rail ? RAIL_TYPES.has(next)||next==='station'||next==='grandStation' : metro ? METRO_TYPES.has(next) : ROAD_TYPES.has(next)||next==='busStation');
+  };
+  const neighbors = [[1,0],[0,1],[-1,0],[0,-1]],dirs = neighbors.filter(([dx,dy])=>connected(dx,dy));
   if(!dirs.length)dirs.push([1,0],[-1,0]);
-  if(metro && !showMetro) { poly(c,diamond,'#95b37b');return; }
-  if(!bridge)poly(c,diamond,metro?'#94ad85':type==='road'?'#9eaf82':'#a8b696');
+  if(metro && !showMetro)return;
+  const crossing=rail&&typesAt(x,y).some(next=>ROAD_TYPES.has(next));
+  if(!bridge&&!rail&&!metro) {
+    // Adjacent road cells form one paved surface. Curbs exist only on the outside
+    // of the whole road, so a boulevard/plaza has no per-tile rings or islands.
+    const asphalt=type!=='road',surface=asphalt?'#738383':'#d6c9aa';
+    poly(c,diamond,surface);
+    const borders=[[[32,0],[0,16]],[[0,16],[-32,0]],[[-32,0],[0,-16]],[[0,-16],[32,0]]];
+    neighbors.forEach(([dx,dy],i)=>{if(!connected(dx,dy)){line(c,borders[i],asphalt?'#bac3ab':'#9caf86',3);line(c,borders[i],asphalt?'#d9d8bf':'#e5dab9',.8);}});
+    const alongX=connected(1,0)||connected(-1,0),alongY=connected(0,1)||connected(0,-1);
+    if(asphalt&&!(alongX&&alongY)){
+      c.save();c.setLineDash([7,7]);
+      line(c,alongY?[iso(0,-.43),iso(0,.43)]:[iso(-.43,0),iso(.43,0)],'#dfd8b8',1);c.restore();
+    }
+    if(!asphalt){rect(c,-12,2,3,1,'#c7ba9a');rect(c,8,-3,4,1,'#e7dbba');}
+  }
+  if(!bridge&&rail&&!crossing)poly(c,diamond,'#a8b696');
   if(bridge) { line(c,[[-19,1],[-19,11]],'#808d84',4);line(c,[[19,1],[19,11]],'#808d84',4); }
   const color = metro ? '#638b91' : rail ? '#a9a28d' : type==='road' ? '#d6c9aa' : '#697b7c';
   for(const [dx,dy] of dirs) {
     const p=iso(dx*.5,dy*.5);
-    line(c,[[0,0],p],color,rail?13:metro?7:19);
+    if(rail||metro||bridge)line(c,[[0,0],p],crossing?'#8b9190':color,rail?13:metro?7:19);
     if(rail) {
       const length=Math.hypot(...p),nx=-p[1]/length*4,ny=p[0]/length*4;
       for(let f=.15;f<=1;f+=.25)line(c,[[p[0]*f+nx,p[1]*f+ny],[p[0]*f-nx,p[1]*f-ny]],'#685e50',2);
       line(c,[[nx*.6,ny*.6],[p[0]+nx*.6,p[1]+ny*.6]],'#d5ded6',1.4);
       line(c,[[-nx*.6,-ny*.6],[p[0]-nx*.6,p[1]-ny*.6]],'#d5ded6',1.4);
-    } else if(type!=='road') {
+    } else if(metro||bridge) {
       c.save();c.setLineDash([4,4]);line(c,[[0,0],p],metro?'#bde2db':'#e7dcaf',1);c.restore();
     }
     if(bridge){const side=5;line(c,[[0,-side],[p[0],p[1]-side]],'#cdd6c1',1.4);line(c,[[0,side],[p[0],p[1]+side]],'#cdd6c1',1.4);}
+  }
+  if(crossing){
+    // Flush timber panels and small warning posts make an actual level crossing.
+    for(const [dx,dy]of dirs){const p=iso(dx*.35,dy*.35);line(c,[[p[0]-2,p[1]-4],[p[0]+2,p[1]+4]],'#d8c497',2.5);}
+    for(const side of [-1,1]){line(c,[[side*23,1],[side*23,-9]],'#786d59',1.3);line(c,[[side*23-3,-10],[side*23+3,-6]],'#ece0bf',2);line(c,[[side*23-3,-6],[side*23+3,-10]],'#bd8067',1.3);}
   }
   if(tunnel){
     poly(c,[[-27,-2],[-17,-19],[-3,-29],[15,-22],[28,0],[15,6],[8,-6],[-7,-11],[-18,5]],'#8b9987');
@@ -408,7 +463,10 @@ export function drawFacility(c, type, time=0, options={}) {
     if(type!=='clinic') {campusBlock(c,maxX-.7,maxY-.2,1.3,1.1,26,'#e4dfc7','#8fa5a0');groundQuad(c,0,maxY,1,1,'#a7b6a7');atCell(c,0,maxY,()=>{c.fillStyle='#f0ead1';c.font='bold 15px sans-serif';c.fillText('H',-6,5);});}
     if(type==='medicalCenter')campusBlock(c,2,maxY,2,1,55,'#e1e4d4','#8dacab');return;
   }
-  if(type==='station'||type==='metroStation'||type==='busStation') {
+  if(type==='station'||type==='grandStation') {
+    drawRailStation(c,type,width,height);return;
+  }
+  if(type==='metroStation'||type==='busStation') {
     const metro=type==='metroStation';
     for(let x=0;x<width;x++)atCell(c,x,maxY,()=>drawNetwork(c,metro?'metroLine':type==='busStation'?'asphalt':'railway',0,0,new Map(),true));
     campusBlock(c,Math.max(.2,width*.3),.25,Math.max(1,width*.65),Math.max(.65,height-1),24,'#e3dbc0',metro?'#658d93':'#889d9a');
@@ -443,10 +501,74 @@ export function drawFacility(c, type, time=0, options={}) {
     for(let i=0;i<blocks;i++){const x=i%Math.max(1,width-1),y=Math.floor(i/Math.max(1,width-1));campusBlock(c,x+.3,y+.3,1.1,1.1,tall?62+i%3*17:type==='apartment'?43:27,'#e3d9bd',tall?'#84a6a1':'#b18a70');}
     atCell(c,maxX,maxY,()=>tree(c,0,0,13));return;
   }
+  if(type==='largeFactory'){drawIndustrialCampus(c,width,height);if(!options.staticPass)drawFacilityAnimation(c,type,time,{...options,width,height});return;}
   if(type==='factory') {for(let x=0;x<width;x+=2)atCell(c,x+.5,height*.45,()=>drawBuilding(c,'factory',time,options));return;}
   campusBlock(c,.5,.5,Math.max(1,width*.7),Math.max(1,height*.55),['museum','library'].includes(type)?33:29,'#e6dcc1',['fire','fireCenter'].includes(type)?'#b9806a':'#8ba5a0');
   if(['fire','fireCenter','police','policeCenter'].includes(type))atCell(c,maxX,maxY,()=>drawBuilding(c,canonical,time));
   else atCell(c,maxX,maxY,()=>tree(c,0,0,10));
+}
+function drawStationTrack(c,width,y) {
+  poly(c,[iso(-.5,y-.18),iso(width-.5,y-.18),iso(width-.5,y+.18),iso(-.5,y+.18)],'#9d9d8d');
+  for(let x=-.42;x<width-.5;x+=.2)line(c,[iso(x,y-.14),iso(x,y+.14)],'#776b59',2.4);
+  for(const dy of [-.075,.075])line(c,[iso(-.5,y+dy),iso(width-.5,y+dy)],'#d2ded4',1.7);
+}
+function drawRailStation(c,type,width,height){
+  const grand=type==='grandStation',maxY=height-1;
+  groundQuad(c,.04,.04,width-.08,height-.08,'#c6c3ab');
+  // The front row is a through track. Buildings, roofs and posts remain behind it.
+  drawStationTrack(c,width,maxY);
+  groundQuad(c,.04,maxY+.02,width-.08,.18,'#e0d6b7');
+  line(c,[iso(-.46,maxY-.39),iso(width-.54,maxY-.39)],'#d4af60',1.3);
+  if(grand){
+    drawStationTrack(c,width,maxY-1);
+    groundQuad(c,.05,maxY-.98,width-.1,.2,'#dad2b6');
+    for(let x=.2;x<width-.3;x+=1.1)atCell(c,x,maxY-.7,()=>{line(c,[[0,0],[0,-20]],'#7d948c',2);});
+    // A long glazed canopy behind the active track, with visible structural ribs.
+    groundQuad(c,.05,maxY-1.12,width-.1,.33,'#89b2ae','#d3e0cc',1.2);
+    for(let x=.12;x<width-.2;x+=.5)line(c,[iso(x,maxY-1.61),iso(x,maxY-1.26)],'#dce1cb',1.2);
+    campusBlock(c,.65,.45,width-1.3,1.25,36,'#e6dfc6','#819f9c');
+    const p=iso(width*.48,.72);box(c,p[0],p[1]-33,22,39,11,'#a8c9c1','#7ea7a4','#659095');
+    for(let n=5;n<39;n+=7)line(c,[[p[0]+n,p[1]-44-n*.5],[p[0]+n-22,p[1]-55-n*.5]],'#dbe3cd',1);
+    wallSign(c,p[0]-37,p[1]-28,62,'FOCU CENTRAL','#6c8d8b');
+    atCell(c,.2,.35,()=>{box(c,0,4,10,10,43,'#aec0ac','#dcd6ba','#a9b8a7');rect(c,-5,-43,10,10,'#e9dfbe');line(c,[[0,-38],[0,-41]],'#69847e',1);line(c,[[0,-38],[3,-37]],'#69847e',1);});
+    for(let x=1;x<width-1;x+=1.5)atCell(c,x,maxY-1.6,()=>bench(c,0,3));
+  }else{
+    campusBlock(c,.3,.08,Math.max(1,width-.6),.65,25,'#e3dbc0','#819b97');
+    const p=iso(width*.4,-.05);wallSign(c,p[0]-19,p[1]-22,34,'FOCU RAIL','#718f85');
+    atCell(c,width-.7,maxY-.65,()=>bench(c,0,-2));
+  }
+  atCell(c,.05,maxY-.6,()=>{line(c,[[0,-1],[0,-22]],'#788c7d',1.5);rect(c,-7,-24,15,8,'#668c88');c.fillStyle='#eee3be';c.font='bold 6px sans-serif';c.fillText(grand?'1 · 2':'1',-4,-18);});
+}
+function industrialTank(c,x,y,r=10,height=20){
+  c.save();c.translate(...iso(x,y));shadow(c,0,3,r+2,5);
+  rect(c,-r,-height,r*2,height,'#afbbb1');
+  c.fillStyle='#a0afa4';c.beginPath();c.ellipse(0,0,r,r*.42,0,0,Math.PI);c.fill();
+  c.fillStyle='#d0d2b9';c.beginPath();c.ellipse(0,-height,r,r*.42,0,0,Math.PI*2);c.fill();
+  line(c,[[r-3,-height+2],[r-3,-1]],'#8b9f95',1.5);
+  for(let yy=-height+5;yy<0;yy+=5)line(c,[[r-6,yy],[r-2,yy]],'#cfd6c0',1);
+  line(c,[[-r+3,-height+2],[-r+3,-2]],'#d8d9be',1);c.restore();
+}
+function drawIndustrialCampus(c,width,height){
+  groundQuad(c,.03,.03,width-.06,height-.06,'#b4b7a3');
+  groundQuad(c,.1,height-1,width-.2,.8,'#83928a');
+  c.save();c.setLineDash([6,6]);line(c,[iso(-.3,height-1.12),iso(width-.7,height-1.12)],'#e5dbad',1);c.restore();
+  // Separate sawtooth workshops, tanks, service pipes and a loading court.
+  for(const [x,y,w,h]of [[.6,.5,2.5,1.15],[.6,1.8,2.5,1.05]]){
+    campusBlock(c,x,y,w,h,27,'#c9b89c','#82958e');
+    const p=iso(x+(w-1)*.5,y+(h-1)*.5);
+    for(let n=0;n<4;n++)poly(c,[[p[0]-23+n*13,p[1]-39+n*2],[p[0]-23+n*13,p[1]-47+n*2],[p[0]-10+n*13,p[1]-39+n*2]],n%2?'#a6b9ad':'#c1c9b1','#81988e',.6);
+    for(let n=0;n<3;n++)poly(c,[[p[0]+n*12+5,p[1]-6-n*6],[p[0]+n*12+5,p[1]-19-n*6],[p[0]+n*12+13,p[1]-23-n*6],[p[0]+n*12+13,p[1]-10-n*6]],'#82958c','#b6c3ae',.8);
+  }
+  for(const [x,y,r,h]of [[4.25,.25,12,27],[5.15,.25,11,23],[4.25,1.1,12,19]])industrialTank(c,x,y,r,h);
+  line(c,[iso(3.5,-.05),iso(5.4,-.05),iso(5.4,1.65)],'#b9bba0',4);line(c,[iso(3.5,-.05),iso(5.4,-.05),iso(5.4,1.65)],'#e1d9b4',1);
+  for(let n=0;n<2;n++)atCell(c,3.15+n*.55,.05,()=>{
+    box(c,0,4,7,7,53+n*7,'#c5baa0','#b9977e','#977c69');
+    for(let h=13;h<50+n*7;h+=13)poly(c,[[-7,4-h],[-7,-h],[0,3.5-h],[7,-h],[7,4-h],[0,7.5-h]],'#ddcbb0');
+  });
+  for(let n=0;n<3;n++)atCell(c,4.1+n*.55,2.1,()=>{box(c,0,4,10,14,10,['#779b95','#b88c72','#a5a974'][n],'#a0a68d','#7e9185');for(let k=2;k<13;k+=3)line(c,[[k,4-k*.5],[k,-5-k*.5]],'#d0c7a8',.65);});
+  atCell(c,.1,height-1.55,()=>wallSign(c,-16,-10,40,'FOCU WORKS','#788f82'));
+  atCell(c,width-.45,height-.9,()=>{lamp(c,3,-3);box(c,0,3,8,8,10,'#9ba998','#cfccb2','#a9b4a0');});
+  for(let x=.2;x<width-.2;x+=.65)line(c,[iso(x,-.45),[...iso(x,-.45)].map((v,i)=>v-(i?6:0))],'#809486',1);
 }
 function drawCityAmenity(c,type,width,height){
   const x=width*.4,y=height*.35,p=iso(x,y),w=height*20,d=width*21;
@@ -487,6 +609,7 @@ export function drawFacilityAnimation(c,type,time=0,options={}){
     if(width===1&&height===1){c.save();chimneySmoke(c,time);c.restore();}
     else for(let x=0;x<width;x+=2)atCell(c,x+.5,height*.45,()=>chimneySmoke(c,time));
   }
+  if(type==='largeFactory')for(let n=0;n<2;n++)atCell(c,3.15+n*.55,.05,()=>{c.save();c.translate(-13,-5-n*7);chimneySmoke(c,time+n*1600);c.restore();});
 }
 
 export function drawCar(c,x,y,direction,seed=0,kind='car') {

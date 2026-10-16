@@ -82,3 +82,41 @@ test('keyboard exploration pans to the selected cell and invokes the same tile c
     }
   }
 });
+
+test('version two worlds provide varied rivers, lakes, shores and biomes while preserving old terrain', () => {
+  for(const seed of [0,42,20261012]){
+    const counts=new Map();let distantWater=0;
+    for(let x=-70;x<=70;x++)for(let y=-70;y<=70;y++){
+      const type=terrainAt(x,y,seed,2);counts.set(type,(counts.get(type)||0)+1);
+      if(type==='water'&&x<-20)distantWater++;
+      assert.equal(terrainAt(x,y,seed),terrainAt(x,y,seed,1));
+    }
+    assert.deepEqual([...counts.keys()].sort(),['forest','grass','mountain','sand','water','wetland']);
+    assert.ok(distantWater>100,'water extends to multiple regions beyond the original single river');
+    for(let x=-3;x<=3;x++)for(let y=-3;y<=3;y++)assert.equal(terrainAt(x,y,seed,2),'grass');
+    const coordinates=[[-900000,777777],[52,-83],[-5,14]];
+    const before=coordinates.map(([x,y])=>terrainAt(x,y,seed,2));
+    coordinates.reverse().forEach(([x,y])=>terrainAt(x,y,'different',2));
+    assert.deepEqual(coordinates.reverse().map(([x,y])=>terrainAt(x,y,seed,2)),before);
+  }
+});
+
+test('quick demolition drags target one infrastructure layer and do not pan the map', () => {
+  const prior=new Map(['window','ResizeObserver','requestAnimationFrame','cancelAnimationFrame'].map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]));
+  const listeners=new Map(),clicked=[];
+  const state={seed:42,buildings:{'0,0':{type:'asphalt'},'rail:0,0':{type:'railway'},'rail:1,0':{type:'railway'}}};
+  const canvas={style:{},getContext:()=>({}),getBoundingClientRect:()=>({width:900,height:620,left:0,top:0}),addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name),focus(){},setPointerCapture(){},hasPointerCapture:()=>false};
+  for(const [name,value]of Object.entries({window:{devicePixelRatio:1},ResizeObserver:class{observe(){}disconnect(){}},requestAnimationFrame:()=>1,cancelAnimationFrame:()=>{}}))Object.defineProperty(globalThis,name,{configurable:true,value});
+  let world;
+  try{
+    world=createWorld(canvas,{getState:()=>state,onTileClick:info=>clicked.push(info)});world.setTool('demolish');world.setDemolitionLayer('rail');
+    listeners.get('pointerdown')({button:0,pointerId:1,clientX:450,clientY:310});
+    listeners.get('pointermove')({clientX:480.4,clientY:325.2});
+    listeners.get('pointermove')({clientX:480.4,clientY:325.2});
+    listeners.get('pointermove')({clientX:510.8,clientY:340.4});
+    listeners.get('pointerup')({pointerId:1,clientX:510.8,clientY:340.4});
+    assert.deepEqual(clicked.map(p=>[p.x,p.y,p.building.type]),[[0,0,'railway'],[1,0,'railway']]);
+    assert.equal(world.getView().x,0);assert.equal(world.getView().y,0);
+    world.setZoom(.01);assert.equal(world.getView().zoom,.18);
+  }finally{world?.destroy();for(const[name,value]of prior)if(value)Object.defineProperty(globalThis,name,value);else delete globalThis[name];}
+});
